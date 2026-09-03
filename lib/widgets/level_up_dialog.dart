@@ -115,7 +115,7 @@ class _LevelUpDialogState extends State<LevelUpDialog> with SingleTickerProvider
                   const SizedBox(height: 20),
 
                   // System Perks granted
-                  _buildPerkRow(Icons.bolt, '+3 Stat Points Allocated to Status Window'),
+                  _buildPerkRow(Icons.bolt, 'Hunter Rank & Max Mana Capacities Elevated'),
                   _buildPerkRow(Icons.favorite, 'Max HP & Stamina Capacities Increased'),
                   _buildPerkRow(Icons.shield_moon, 'Physical Fatigue Alleviated by 20%'),
                   const SizedBox(height: 24),

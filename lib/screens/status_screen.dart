@@ -282,92 +282,77 @@ class StatusScreen extends StatelessWidget {
             ),
           ),
 
-          // Vitals (HP / MP / Fatigue)
-          SystemWindow(
-            title: 'Vitals & Energy',
-            child: Column(
-              children: [
-                _buildGaugeRow('HP', '${profile.currentHp} / ${profile.maxHp}', profile.currentHp / profile.maxHp, SystemColors.hpGreen),
-                const SizedBox(height: 8),
-                _buildGaugeRow('MP', '${profile.currentMp} / ${profile.maxMp}', profile.currentMp / profile.maxMp, SystemColors.mpBlue),
-                const SizedBox(height: 8),
-                _buildGaugeRow('FATIGUE', '${profile.fatigue}%', profile.fatigue / 100.0, SystemColors.fatigueAmber),
-              ],
-            ),
-          ),
-
-          // Attributes & Stat Point Allocation
+          // Attributes & Task-Driven Growth
           SystemWindow(
             title: 'Hunter Attributes',
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: profile.statPoints > 0
-                    ? SystemColors.goldAccent.withValues(alpha: 0.2)
-                    : Colors.transparent,
+                color: SystemColors.cyanGlow.withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: profile.statPoints > 0 ? SystemColors.goldAccent : Colors.white24,
-                ),
+                border: Border.all(color: SystemColors.cyanGlow, width: 0.8),
               ),
               child: Text(
-                'PTS: ${profile.statPoints}',
+                'TASK-FORGED',
                 style: GoogleFonts.orbitron(
-                  color: profile.statPoints > 0 ? SystemColors.goldAccent : Colors.white54,
+                  color: SystemColors.cyanGlow,
                   fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                  fontSize: 11,
+                  letterSpacing: 1.0,
                 ),
               ),
             ),
             child: Column(
               children: [
-                if (profile.statPoints > 0)
-                  Padding(
-                    padding: const EdgeInsets.only(bottom: 10.0),
-                    child: Row(
-                      children: [
-                        const Icon(Icons.stars, color: SystemColors.goldAccent, size: 16),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Select attributes to allocate ${profile.statPoints} unspent points!',
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  margin: const EdgeInsets.only(bottom: 10.0),
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: SystemColors.cyanGlow.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.fitness_center, color: SystemColors.cyanGlow, size: 14),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'SYSTEM LAW: Attributes elevate automatically upon clearing daily tasks.',
                           style: GoogleFonts.rajdhani(
-                            color: SystemColors.goldAccent,
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
+                            color: SystemColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
                           ),
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
+                ),
                 StatRow(
                   statType: StatType.str,
                   value: profile.stats.strength,
-                  availablePoints: profile.statPoints,
-                  onAdd: () => state.addStatPoint(StatType.str),
+                  gainsFromTasks: state.statGainsFromQuests['STR'] ?? 0,
                 ),
                 StatRow(
                   statType: StatType.agi,
                   value: profile.stats.agility,
-                  availablePoints: profile.statPoints,
-                  onAdd: () => state.addStatPoint(StatType.agi),
+                  gainsFromTasks: state.statGainsFromQuests['AGI'] ?? 0,
                 ),
                 StatRow(
                   statType: StatType.vit,
                   value: profile.stats.vitality,
-                  availablePoints: profile.statPoints,
-                  onAdd: () => state.addStatPoint(StatType.vit),
+                  gainsFromTasks: state.statGainsFromQuests['VIT'] ?? 0,
                 ),
                 StatRow(
                   statType: StatType.intl,
                   value: profile.stats.intelligence,
-                  availablePoints: profile.statPoints,
-                  onAdd: () => state.addStatPoint(StatType.intl),
+                  gainsFromTasks: state.statGainsFromQuests['INT'] ?? 0,
                 ),
                 StatRow(
                   statType: StatType.per,
                   value: profile.stats.perception,
-                  availablePoints: profile.statPoints,
-                  onAdd: () => state.addStatPoint(StatType.per),
+                  gainsFromTasks: state.statGainsFromQuests['PER'] ?? 0,
                 ),
               ],
             ),
@@ -375,43 +360,6 @@ class StatusScreen extends StatelessWidget {
           const SizedBox(height: 24),
         ],
       ),
-    );
-  }
-
-  Widget _buildGaugeRow(String label, String value, double ratio, Color color) {
-    return Column(
-      children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              label,
-              style: GoogleFonts.orbitron(
-                color: color,
-                fontSize: 12,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-            Text(
-              value,
-              style: GoogleFonts.orbitron(
-                color: SystemColors.textPrimary,
-                fontSize: 11,
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        ClipRRect(
-          borderRadius: BorderRadius.circular(3),
-          child: LinearProgressIndicator(
-            value: ratio.clamp(0.0, 1.0),
-            minHeight: 6,
-            backgroundColor: Colors.black45,
-            valueColor: AlwaysStoppedAnimation<Color>(color),
-          ),
-        ),
-      ],
     );
   }
 }

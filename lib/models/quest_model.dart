@@ -48,6 +48,34 @@ class Quest {
 
   double get progress => target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
 
+  Quest copyWith({
+    String? id,
+    String? title,
+    String? description,
+    int? current,
+    int? target,
+    String? unit,
+    StatType? statReward,
+    int? expReward,
+    int? goldReward,
+    bool? isDaily,
+    bool? isCompleted,
+    int? streak,
+  }) => Quest(
+    id: id ?? this.id,
+    title: title ?? this.title,
+    description: description ?? this.description,
+    current: current ?? this.current,
+    target: target ?? this.target,
+    unit: unit ?? this.unit,
+    statReward: statReward ?? this.statReward,
+    expReward: expReward ?? this.expReward,
+    goldReward: goldReward ?? this.goldReward,
+    isDaily: isDaily ?? this.isDaily,
+    isCompleted: isCompleted ?? this.isCompleted,
+    streak: streak ?? this.streak,
+  );
+
   Map<String, dynamic> toJson() => {
     'id': id,
     'title': title,
