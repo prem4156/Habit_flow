@@ -121,4 +121,70 @@ void main() {
     expect(find.text('Push-ups'), findsOneWidget);
     expect(find.text('NEW TASK'), findsOneWidget);
   });
+
+  test('Emergency quest generation sets deadline to 23:59 and triggers modal state', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    // Initially no emergency quest
+    expect(state.activeEmergencyQuest, isNull);
+    expect(state.showEmergencyQuestModal, false);
+
+    // Trigger emergency quest
+    state.triggerEmergencyQuest(customReason: 'Test: insufficient discipline detected.');
+
+    expect(state.activeEmergencyQuest, isNotNull);
+    expect(state.activeEmergencyQuest!.isEmergency, true);
+    expect(state.activeEmergencyQuest!.deadline, '23:59');
+    expect(state.showEmergencyQuestModal, true);
+    expect(state.activeEmergencyQuest!.urgentReason, 'Test: insufficient discipline detected.');
+
+    state.dispose();
+  });
+
+  test('Completing an emergency quest grants double stats, EXP, Gold and dismisses it', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    state.triggerEmergencyQuest();
+    final quest = state.activeEmergencyQuest!;
+    final statCode = quest.statReward.code;
+    final initialStatGains = state.statGainsFromQuests[statCode] ?? 0;
+    final initialGold = state.profile.gold;
+
+    // Complete the emergency quest
+    state.incrementEmergencyQuestProgress(quest.target);
+
+    expect(quest.isCompleted, true);
+    // Emergency quests grant +2 to stat
+    expect(state.statGainsFromQuests[statCode], initialStatGains + 2);
+    expect(state.profile.gold, greaterThan(initialGold));
+
+    state.dispose();
+  });
+
+  test('First quest completion unlocks FIRST AWAKENING achievement', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    // Complete one quest
+    state.incrementQuestProgress('daily_pushups', 100);
+
+    final firstAwakening = state.achievements.firstWhere((a) => a.id == 'first_awakening');
+    expect(firstAwakening.isUnlocked, true);
+    expect(firstAwakening.currentProgress, firstAwakening.maxProgress);
+
+    state.dispose();
+  });
+
+  test('7-day streak tracking updates THE UNBROKEN achievement progress', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    final theUnbroken = state.achievements.firstWhere((a) => a.id == 'the_unbroken');
+    expect(theUnbroken.isUnlocked, false);
+    expect(theUnbroken.maxProgress, 7);
+
+    state.dispose();
+  });
 }

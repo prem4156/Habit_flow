@@ -6,6 +6,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import '../models/hunter_model.dart';
 import '../models/quest_model.dart';
 import '../models/item_model.dart';
+import '../models/achievement_model.dart';
 
 class SystemState extends ChangeNotifier {
   static const String _prefProfileKey = 'sl_hunter_profile';
@@ -14,10 +15,16 @@ class SystemState extends ChangeNotifier {
   static const String _prefDailyProgressKey = 'sl_daily_progress';
   static const String _prefDailyCompletedKey = 'sl_daily_completed';
   static const String _prefStatGainsKey = 'sl_stat_gains';
+  static const String _prefAchievementsKey = 'sl_achievements';
+  static const String _prefEmergencyQuestKey = 'sl_emergency_quest';
+  static const String _prefConsecutiveDaysKey = 'sl_consecutive_days';
+  static const String _prefTotalClearsKey = 'sl_total_clears';
+  static const String _prefLastPerfectDayKey = 'sl_last_perfect_day';
 
   HunterProfile _profile = HunterProfile.defaultProfile();
   List<Quest> _quests = Quest.defaultSoloQuests();
   List<InventoryItem> _items = InventoryItem.defaultItems();
+  List<Achievement> _achievements = Achievement.defaultAchievements();
 
   DateTime _selectedDate = DateTime.now();
 
@@ -43,10 +50,83 @@ class SystemState extends ChangeNotifier {
   int _penaltyTimeRemainingSeconds = 600; // 10 minutes desert survival
   Timer? _penaltyTimer;
 
+  // --- Autonomous System State ---
+  Quest? _activeEmergencyQuest;
+  bool _showEmergencyQuestModal = false;
+  Achievement? _latestUnlockedAchievement;
+  bool _showAchievementModal = false;
+  int _consecutivePerfectDays = 0;
+  int _totalQuestClears = 0;
+  String? _lastPerfectDay;
+  Timer? _autonomousTimer;
+  Timer? _initialDelayTimer;
+
+  // Cryptic system monologues the system can emit
+  static const List<String> _crypticObservations = [
+    '[SYSTEM] ... Observing.',
+    '[SYSTEM] The System is always watching.',
+    '[SYSTEM] Your discipline has been noted.',
+    '[SYSTEM] Designation: Hunter. Status: Under Evaluation.',
+    '[SYSTEM] "Weakness is a choice." — The System',
+    '[SYSTEM] Shadow extraction protocols... dormant.',
+    '[SYSTEM] Anomalous willpower detected. Monitoring...',
+    '[SYSTEM] The gates between worlds grow thinner.',
+    '[SYSTEM] Every rep brings you closer to the Monarch\'s throne.',
+    '[SYSTEM] Current threat level: Manageable. For now.',
+  ];
+
+  static const List<String> _warningMessages = [
+    '[WARNING] Insufficient daily progress detected. System intervention imminent.',
+    '[WARNING] The System does not tolerate complacency.',
+    '[WARNING] Penalty Zone protocols on standby. Complete your tasks.',
+    '[WARNING] Hunter performance below acceptable threshold.',
+    '[WARNING] "Those who do not train... do not survive." — System Alert',
+  ];
+
+  // Emergency quest templates
+  static const List<Map<String, dynamic>> _emergencyQuestTemplates = [
+    {
+      'title': 'Emergency Sprint Protocol',
+      'description': 'The System has detected insufficient discipline. Complete 50 push-ups immediately.',
+      'target': 50,
+      'unit': 'reps',
+      'stat': 'STR',
+    },
+    {
+      'title': 'Shadow Endurance Trial',
+      'description': 'Prove your worth or face consequences. Run 2km before midnight.',
+      'target': 2,
+      'unit': 'km',
+      'stat': 'VIT',
+    },
+    {
+      'title': 'Mental Fortitude Exam',
+      'description': 'The System demands cognitive proof. 20 minutes of focused study.',
+      'target': 20,
+      'unit': 'mins',
+      'stat': 'INT',
+    },
+    {
+      'title': 'Perception Calibration',
+      'description': 'Your senses are dulling. 10 minutes of meditation. Now.',
+      'target': 10,
+      'unit': 'mins',
+      'stat': 'PER',
+    },
+    {
+      'title': 'Core Stability Override',
+      'description': 'System integrity compromised. 30 sit-ups required for stabilization.',
+      'target': 30,
+      'unit': 'reps',
+      'stat': 'VIT',
+    },
+  ];
+
   HunterProfile get profile => _profile;
   List<Quest> get quests => getQuestsForDate(_selectedDate);
   List<Quest> get allTemplateQuests => _quests;
   List<InventoryItem> get items => _items;
+  List<Achievement> get achievements => _achievements;
   bool get isInitialized => _isInitialized;
   String? get lastSystemMessage => _lastSystemMessage;
   bool get showLevelUpModal => _showLevelUpModal;
@@ -55,6 +135,14 @@ class SystemState extends ChangeNotifier {
   int get penaltyTimeRemainingSeconds => _penaltyTimeRemainingSeconds;
   DateTime get selectedDate => _selectedDate;
   Map<String, int> get statGainsFromQuests => _statGainsFromQuests;
+
+  // Autonomous system getters
+  Quest? get activeEmergencyQuest => _activeEmergencyQuest;
+  bool get showEmergencyQuestModal => _showEmergencyQuestModal;
+  Achievement? get latestUnlockedAchievement => _latestUnlockedAchievement;
+  bool get showAchievementModal => _showAchievementModal;
+  int get consecutivePerfectDays => _consecutivePerfectDays;
+  int get totalQuestClears => _totalQuestClears;
 
   int get completedDailyCount => getDateCompletedCount(_selectedDate);
   int get totalDailyCount => getDateTotalCount(_selectedDate);
@@ -134,6 +222,28 @@ class SystemState extends ChangeNotifier {
         _statGainsFromQuests = decoded.map((k, v) => MapEntry(k.toString(), v is int ? v : 0));
       }
 
+      // Load achievements
+      final achievementsStr = prefs.getString(_prefAchievementsKey);
+      if (achievementsStr != null) {
+        final List list = jsonDecode(achievementsStr);
+        _achievements = list.map((a) => Achievement.fromJson(a)).toList();
+      }
+
+      // Load emergency quest
+      final emergencyStr = prefs.getString(_prefEmergencyQuestKey);
+      if (emergencyStr != null) {
+        _activeEmergencyQuest = Quest.fromJson(jsonDecode(emergencyStr));
+        // Check if emergency quest deadline has passed (it's a new day)
+        if (_activeEmergencyQuest != null && !_activeEmergencyQuest!.isCompleted) {
+          // Emergency quest persists until completed or a new day starts
+        }
+      }
+
+      // Load streak tracking
+      _consecutivePerfectDays = prefs.getInt(_prefConsecutiveDaysKey) ?? 0;
+      _totalQuestClears = prefs.getInt(_prefTotalClearsKey) ?? 0;
+      _lastPerfectDay = prefs.getString(_prefLastPerfectDayKey);
+
       // Synchronize today's active progress into _quests
       final todayProg = _dailyProgress[todayKey] ?? {};
       final todayDone = _dailyCompleted[todayKey] ?? [];
@@ -151,6 +261,8 @@ class SystemState extends ChangeNotifier {
     } finally {
       _isInitialized = true;
       notifyListeners();
+      // Start the autonomous system evaluation loop
+      _startAutonomousSystem();
     }
   }
 
@@ -163,6 +275,17 @@ class SystemState extends ChangeNotifier {
       await prefs.setString(_prefDailyProgressKey, jsonEncode(_dailyProgress));
       await prefs.setString(_prefDailyCompletedKey, jsonEncode(_dailyCompleted));
       await prefs.setString(_prefStatGainsKey, jsonEncode(_statGainsFromQuests));
+      await prefs.setString(_prefAchievementsKey, jsonEncode(_achievements.map((a) => a.toJson()).toList()));
+      if (_activeEmergencyQuest != null) {
+        await prefs.setString(_prefEmergencyQuestKey, jsonEncode(_activeEmergencyQuest!.toJson()));
+      } else {
+        await prefs.remove(_prefEmergencyQuestKey);
+      }
+      await prefs.setInt(_prefConsecutiveDaysKey, _consecutivePerfectDays);
+      await prefs.setInt(_prefTotalClearsKey, _totalQuestClears);
+      if (_lastPerfectDay != null) {
+        await prefs.setString(_prefLastPerfectDayKey, _lastPerfectDay!);
+      }
     } catch (e) {
       debugPrint('Error saving system state: $e');
     }
@@ -180,6 +303,244 @@ class SystemState extends ChangeNotifier {
 
   void closeLevelUpModal() {
     _showLevelUpModal = false;
+    notifyListeners();
+  }
+
+  // =============================================
+  // --- AUTONOMOUS MYSTERIOUS SYSTEM ENGINE ---
+  // =============================================
+
+  void _startAutonomousSystem() {
+    _autonomousTimer?.cancel();
+    _initialDelayTimer?.cancel();
+    // Evaluate every 90 seconds
+    _autonomousTimer = Timer.periodic(const Duration(seconds: 90), (_) {
+      _autonomousEvaluation();
+    });
+    // Also run an initial evaluation after a short delay
+    _initialDelayTimer = Timer(const Duration(seconds: 5), () {
+      _autonomousEvaluation();
+    });
+  }
+
+  void _autonomousEvaluation() {
+    if (!_isInitialized) return;
+    final now = DateTime.now();
+    final hour = now.hour;
+    final ratio = getDateCompletionRatio(DateTime.now());
+    final rand = Random();
+
+    // Late in the day with low completion -> system warns or generates emergency
+    if (hour >= 18 && ratio < 0.5 && _activeEmergencyQuest == null) {
+      if (rand.nextDouble() < 0.35) {
+        triggerEmergencyQuest();
+        return;
+      } else {
+        final warning = _warningMessages[rand.nextInt(_warningMessages.length)];
+        postSystemMessage(warning);
+        return;
+      }
+    }
+
+    // Periodically emit cryptic observations (low probability)
+    if (rand.nextDouble() < 0.15) {
+      final observation = _crypticObservations[rand.nextInt(_crypticObservations.length)];
+      postSystemMessage(observation);
+    }
+
+    // Check achievements passively
+    _checkAchievements();
+  }
+
+  /// Manually trigger the autonomous system for testing/demonstration
+  void simulateAutonomousIntervention() {
+    final rand = Random();
+    final roll = rand.nextInt(100);
+
+    if (roll < 40) {
+      // Generate an emergency quest
+      triggerEmergencyQuest(
+        customReason: 'The System has detected a critical lapse in training discipline.',
+      );
+    } else if (roll < 70) {
+      // Emit a dramatic warning
+      final warning = _warningMessages[rand.nextInt(_warningMessages.length)];
+      postSystemMessage(warning);
+    } else {
+      // Emit a cryptic observation
+      final observation = _crypticObservations[rand.nextInt(_crypticObservations.length)];
+      postSystemMessage(observation);
+    }
+  }
+
+  void triggerEmergencyQuest({String? customReason}) {
+    if (_activeEmergencyQuest != null && !_activeEmergencyQuest!.isCompleted) {
+      postSystemMessage('[SYSTEM] An Emergency Quest is already active. Complete it first.');
+      return;
+    }
+
+    final rand = Random();
+    final template = _emergencyQuestTemplates[rand.nextInt(_emergencyQuestTemplates.length)];
+
+    _activeEmergencyQuest = Quest.createEmergencyQuest(
+      title: template['title'] as String,
+      description: template['description'] as String,
+      target: template['target'] as int,
+      unit: template['unit'] as String,
+      statReward: StatType.fromCode(template['stat'] as String),
+      urgentReason: customReason ?? 'Player has demonstrated insufficient discipline.',
+    );
+
+    _showEmergencyQuestModal = true;
+    saveState();
+    notifyListeners();
+  }
+
+  void dismissEmergencyQuestModal() {
+    _showEmergencyQuestModal = false;
+    notifyListeners();
+  }
+
+  void incrementEmergencyQuestProgress(int amount) {
+    if (_activeEmergencyQuest == null || _activeEmergencyQuest!.isCompleted) return;
+
+    _activeEmergencyQuest!.current =
+        min(_activeEmergencyQuest!.target, _activeEmergencyQuest!.current + amount);
+
+    if (_activeEmergencyQuest!.current >= _activeEmergencyQuest!.target) {
+      _completeEmergencyQuest();
+    } else {
+      postSystemMessage(
+        '[EMERGENCY] ${_activeEmergencyQuest!.title}: '
+        '[${_activeEmergencyQuest!.current} / ${_activeEmergencyQuest!.target} ${_activeEmergencyQuest!.unit}]',
+      );
+    }
+
+    saveState();
+    notifyListeners();
+  }
+
+  void _completeEmergencyQuest() {
+    if (_activeEmergencyQuest == null) return;
+
+    final quest = _activeEmergencyQuest!;
+    quest.isCompleted = true;
+
+    // Apply stat reward
+    switch (quest.statReward) {
+      case StatType.str:
+        _profile.stats.strength += 2;
+        break;
+      case StatType.agi:
+        _profile.stats.agility += 2;
+        break;
+      case StatType.vit:
+        _profile.stats.vitality += 2;
+        break;
+      case StatType.intl:
+        _profile.stats.intelligence += 2;
+        break;
+      case StatType.per:
+        _profile.stats.perception += 2;
+        break;
+    }
+    _statGainsFromQuests[quest.statReward.code] =
+        (_statGainsFromQuests[quest.statReward.code] ?? 0) + 2;
+
+    _profile.gold += quest.goldReward;
+
+    postSystemMessage(
+      '[SYSTEM: EMERGENCY QUEST CLEARED]\n'
+      'Quest [${quest.title}] completed before deadline!\n'
+      'Rewards: +2 ${quest.statReward.code}, +${quest.expReward} EXP, +${quest.goldReward} Gold',
+    );
+
+    gainExp(quest.expReward);
+
+    // Check the eleventh_hour achievement
+    _unlockAchievement('eleventh_hour');
+
+    saveState();
+    notifyListeners();
+  }
+
+  void dismissEmergencyQuest() {
+    _activeEmergencyQuest = null;
+    _showEmergencyQuestModal = false;
+    saveState();
+    notifyListeners();
+  }
+
+  // --- Achievement System ---
+
+  void _checkAchievements() {
+    // First Awakening: complete 1 quest ever
+    if (_totalQuestClears >= 1) {
+      _unlockAchievement('first_awakening');
+    }
+
+    // Iron Discipline: 10 total quest clears
+    _updateAchievementProgress('iron_discipline', _totalQuestClears);
+    if (_totalQuestClears >= 10) {
+      _unlockAchievement('iron_discipline');
+    }
+
+    // Perfect Regimen: 100% daily quests in a single day (checked at completion time)
+    // (handled in _checkDailyCompletionBonus)
+
+    // The Unbroken: 7 consecutive perfect days
+    _updateAchievementProgress('the_unbroken', _consecutivePerfectDays);
+    if (_consecutivePerfectDays >= 7) {
+      _unlockAchievement('the_unbroken');
+    }
+
+    // Monarch's Will: reach level 5
+    _updateAchievementProgress('monarch_will', _profile.level);
+    if (_profile.level >= 5) {
+      _unlockAchievement('monarch_will');
+    }
+
+    saveState();
+  }
+
+  void _updateAchievementProgress(String achievementId, int progress) {
+    final index = _achievements.indexWhere((a) => a.id == achievementId);
+    if (index == -1) return;
+    if (_achievements[index].isUnlocked) return;
+    _achievements[index].currentProgress =
+        min(_achievements[index].maxProgress, progress);
+  }
+
+  void _unlockAchievement(String achievementId) {
+    final index = _achievements.indexWhere((a) => a.id == achievementId);
+    if (index == -1 || _achievements[index].isUnlocked) return;
+
+    final achievement = _achievements[index];
+    achievement.isUnlocked = true;
+    achievement.unlockedAt = DateTime.now();
+    achievement.currentProgress = achievement.maxProgress;
+
+    // Grant rewards
+    _profile.gold += achievement.goldReward;
+    if (achievement.titleReward != null) {
+      if (!_profile.titles.contains(achievement.titleReward)) {
+        _profile.titles.add(achievement.titleReward!);
+      }
+    }
+
+    _latestUnlockedAchievement = achievement;
+    _showAchievementModal = true;
+
+    // Grant EXP (calls gainExp which triggers notifyListeners)
+    gainExp(achievement.expReward);
+
+    saveState();
+    notifyListeners();
+  }
+
+  void dismissAchievementModal() {
+    _showAchievementModal = false;
+    _latestUnlockedAchievement = null;
     notifyListeners();
   }
 
@@ -225,6 +586,7 @@ class SystemState extends ChangeNotifier {
       _showLevelUpModal = true;
       postSystemMessage('[SYSTEM] LEVEL UP! Hunter reached Level ${_profile.level}!');
     }
+    _checkAchievements();
     saveState();
     notifyListeners();
   }
@@ -378,6 +740,7 @@ class SystemState extends ChangeNotifier {
     quest.isCompleted = true;
     quest.streak++;
     _profile.gold += quest.goldReward;
+    _totalQuestClears++;
 
     final completedList = _dailyCompleted.putIfAbsent(dKey, () => []);
     if (!completedList.contains(quest.id)) {
@@ -414,10 +777,12 @@ class SystemState extends ChangeNotifier {
 
     gainExp(quest.expReward);
     _checkDailyCompletionBonus(targetDate);
+    _checkAchievements();
   }
 
   void _checkDailyCompletionBonus([DateTime? date]) {
     final targetDate = date ?? _selectedDate;
+    final dKey = dateKey(targetDate);
     final questsForDay = getQuestsForDate(targetDate);
     final allDone = questsForDay.isNotEmpty && questsForDay.every((q) => q.isCompleted);
     if (allDone) {
@@ -429,6 +794,23 @@ class SystemState extends ChangeNotifier {
         'You have conquered all training for ${targetDate.month}/${targetDate.day}!\n'
         'Rewards: +300 Gold, 1x Blessed Random Box, 1x Status Recovery Potion!',
       );
+
+      // Track consecutive perfect days
+      if (_lastPerfectDay == null || _lastPerfectDay != dKey) {
+        // Check if this is consecutive to the previous perfect day
+        final yesterday = targetDate.subtract(const Duration(days: 1));
+        final yesterdayKey = dateKey(yesterday);
+        if (_lastPerfectDay == yesterdayKey) {
+          _consecutivePerfectDays++;
+        } else {
+          _consecutivePerfectDays = 1;
+        }
+        _lastPerfectDay = dKey;
+      }
+
+      // Unlock Perfect Regimen
+      _unlockAchievement('perfect_regimen');
+      _checkAchievements();
     }
   }
 
@@ -626,6 +1008,7 @@ class SystemState extends ChangeNotifier {
     _isPenaltyActive = false;
     _profile.fatigue = 85;
     gainExp(150);
+    _unlockAchievement('abyss_survivor');
     postSystemMessage('[SYSTEM] Penalty Quest Survived! Survived the Desert Realm.');
     saveState();
     notifyListeners();
@@ -641,6 +1024,8 @@ class SystemState extends ChangeNotifier {
   @override
   void dispose() {
     _penaltyTimer?.cancel();
+    _autonomousTimer?.cancel();
+    _initialDelayTimer?.cancel();
     super.dispose();
   }
 }

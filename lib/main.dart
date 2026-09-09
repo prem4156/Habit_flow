@@ -7,6 +7,8 @@ import 'services/system_state.dart';
 import 'theme/system_theme.dart';
 import 'widgets/level_up_dialog.dart';
 import 'widgets/penalty_dialog.dart';
+import 'widgets/emergency_quest_dialog.dart';
+import 'widgets/achievement_dialog.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -181,6 +183,25 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                 timeRemainingSeconds: _systemState.penaltyTimeRemainingSeconds,
                 onSurvive: () => _systemState.completePenaltyZone(),
                 onEscape: () => _systemState.escapePenaltyZone(),
+              ),
+            ),
+
+          // Emergency Quest Modal Overlay
+          if (_systemState.showEmergencyQuestModal && _systemState.activeEmergencyQuest != null)
+            Positioned.fill(
+              child: EmergencyQuestDialog(
+                emergencyQuest: _systemState.activeEmergencyQuest!,
+                onDismiss: () => _systemState.dismissEmergencyQuestModal(),
+                onAccept: () => _systemState.dismissEmergencyQuestModal(),
+              ),
+            ),
+
+          // Achievement Unlocked Modal Overlay
+          if (_systemState.showAchievementModal && _systemState.latestUnlockedAchievement != null)
+            Positioned.fill(
+              child: AchievementDialog(
+                achievement: _systemState.latestUnlockedAchievement!,
+                onDismiss: () => _systemState.dismissAchievementModal(),
               ),
             ),
         ],

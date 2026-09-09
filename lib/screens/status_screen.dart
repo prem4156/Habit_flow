@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/quest_model.dart';
+import '../models/achievement_model.dart';
 import '../services/system_state.dart';
 import '../theme/system_theme.dart';
 import '../widgets/stat_row.dart';
@@ -357,8 +358,233 @@ class StatusScreen extends StatelessWidget {
               ],
             ),
           ),
+
+          // System Achievements & Feats
+          SystemWindow(
+            title: 'System Achievements & Feats',
+            trailing: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+              decoration: BoxDecoration(
+                color: SystemColors.purpleShadow.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(4),
+                border: Border.all(color: SystemColors.purpleShadow, width: 0.8),
+              ),
+              child: Text(
+                '${state.achievements.where((a) => a.isUnlocked).length}/${state.achievements.length}',
+                style: GoogleFonts.orbitron(
+                  color: SystemColors.purpleShadow,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 11,
+                ),
+              ),
+            ),
+            child: Column(
+              children: [
+                ...state.achievements.map((achievement) => _buildAchievementRow(achievement)),
+              ],
+            ),
+          ),
+
+          // System Intervention / Diagnostic
+          SystemWindow(
+            title: 'System Autonomous Engine',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                  margin: const EdgeInsets.only(bottom: 10.0),
+                  decoration: BoxDecoration(
+                    color: Colors.black45,
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: SystemColors.cyanGlow.withValues(alpha: 0.3)),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.auto_awesome, color: SystemColors.cyanGlow, size: 14),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          'The System monitors your discipline autonomously. Emergency Quests and Achievements may trigger at any time.',
+                          style: GoogleFonts.rajdhani(
+                            color: SystemColors.textSecondary,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Consecutive Perfect Days: ${state.consecutivePerfectDays}',
+                          style: GoogleFonts.rajdhani(
+                            color: SystemColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                        Text(
+                          'Total Quests Cleared: ${state.totalQuestClears}',
+                          style: GoogleFonts.rajdhani(
+                            color: SystemColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ],
+                    ),
+                    ElevatedButton.icon(
+                      onPressed: () => state.simulateAutonomousIntervention(),
+                      icon: const Icon(Icons.bolt, size: 16),
+                      label: Text(
+                        'TRIGGER SYSTEM',
+                        style: GoogleFonts.orbitron(
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: SystemColors.penaltyRed,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
           const SizedBox(height: 24),
         ],
+      ),
+    );
+  }
+
+  Widget _buildAchievementRow(Achievement achievement) {
+    Color tierColor;
+    switch (achievement.tier) {
+      case AchievementTier.bronze:
+        tierColor = const Color(0xFFCD7F32);
+        break;
+      case AchievementTier.silver:
+        tierColor = const Color(0xFFC0C0C0);
+        break;
+      case AchievementTier.gold:
+        tierColor = SystemColors.goldAccent;
+        break;
+      case AchievementTier.legendary:
+        tierColor = SystemColors.purpleShadow;
+        break;
+    }
+
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 4.0),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+        decoration: BoxDecoration(
+          color: achievement.isUnlocked
+              ? tierColor.withValues(alpha: 0.08)
+              : Colors.black38,
+          borderRadius: BorderRadius.circular(6),
+          border: Border.all(
+            color: achievement.isUnlocked
+                ? tierColor.withValues(alpha: 0.5)
+                : Colors.white.withValues(alpha: 0.1),
+            width: achievement.isUnlocked ? 1.2 : 0.8,
+          ),
+        ),
+        child: Row(
+          children: [
+            // Badge
+            Container(
+              width: 36,
+              height: 36,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: achievement.isUnlocked
+                    ? tierColor.withValues(alpha: 0.2)
+                    : Colors.black45,
+                border: Border.all(
+                  color: achievement.isUnlocked ? tierColor : Colors.white24,
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  achievement.isUnlocked ? achievement.badge : '?',
+                  style: TextStyle(
+                    fontSize: achievement.isUnlocked ? 18 : 16,
+                    color: achievement.isUnlocked ? null : Colors.white24,
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(width: 12),
+            // Details
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    achievement.title,
+                    style: GoogleFonts.orbitron(
+                      color: achievement.isUnlocked ? tierColor : Colors.white38,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.8,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    achievement.description,
+                    style: GoogleFonts.rajdhani(
+                      color: achievement.isUnlocked
+                          ? SystemColors.textSecondary
+                          : SystemColors.textMuted,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  if (!achievement.isUnlocked && achievement.maxProgress > 1) ...[
+                    const SizedBox(height: 4),
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(2),
+                      child: LinearProgressIndicator(
+                        value: achievement.progress,
+                        minHeight: 4,
+                        backgroundColor: Colors.black45,
+                        valueColor: AlwaysStoppedAnimation<Color>(
+                            tierColor.withValues(alpha: 0.6)),
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${achievement.currentProgress} / ${achievement.maxProgress}',
+                      style: GoogleFonts.orbitron(
+                        color: SystemColors.textMuted,
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            // Status icon
+            Icon(
+              achievement.isUnlocked ? Icons.check_circle : Icons.lock_outline,
+              color: achievement.isUnlocked ? tierColor : Colors.white24,
+              size: 20,
+            ),
+          ],
+        ),
       ),
     );
   }

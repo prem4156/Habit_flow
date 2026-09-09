@@ -427,6 +427,10 @@ class _QuestScreenState extends State<QuestScreen> {
 
           const SizedBox(height: 10),
 
+          // Emergency Quest Directive (if active)
+          if (state.activeEmergencyQuest != null && !state.activeEmergencyQuest!.isCompleted)
+            _buildEmergencyQuestCard(context, state),
+
           // Google Tasks Header Section
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -868,6 +872,202 @@ class _QuestScreenState extends State<QuestScreen> {
           label,
           style: GoogleFonts.orbitron(
             color: isMax ? Colors.black : SystemColors.cyanGlow,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmergencyQuestCard(BuildContext context, SystemState state) {
+    final quest = state.activeEmergencyQuest!;
+    final progress = quest.progress;
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 10.0),
+      child: Container(
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: SystemColors.penaltyDark,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: SystemColors.penaltyRed, width: 1.5),
+          boxShadow: [
+            BoxShadow(
+              color: SystemColors.penaltyRed.withValues(alpha: 0.3),
+              blurRadius: 16,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.warning_amber_rounded,
+                    color: SystemColors.penaltyRed, size: 18),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    '⚠ EMERGENCY DIRECTIVE',
+                    style: GoogleFonts.orbitron(
+                      color: SystemColors.penaltyRed,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                ),
+                Container(
+                  padding:
+                      const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: SystemColors.penaltyRed.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: SystemColors.penaltyRed),
+                  ),
+                  child: Text(
+                    'DEADLINE ${quest.deadline ?? "23:59"}',
+                    style: GoogleFonts.orbitron(
+                      color: SystemColors.penaltyRed,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text(
+              quest.title,
+              style: GoogleFonts.orbitron(
+                color: Colors.white,
+                fontSize: 15,
+                fontWeight: FontWeight.bold,
+                letterSpacing: 1.0,
+              ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              quest.description,
+              style: GoogleFonts.rajdhani(
+                color: SystemColors.textSecondary,
+                fontSize: 13,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const SizedBox(height: 10),
+            // Progress bar
+            ClipRRect(
+              borderRadius: BorderRadius.circular(4),
+              child: LinearProgressIndicator(
+                value: progress,
+                minHeight: 8,
+                backgroundColor: Colors.black45,
+                valueColor: const AlwaysStoppedAnimation<Color>(
+                    SystemColors.penaltyRed),
+              ),
+            ),
+            const SizedBox(height: 6),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  '${quest.current} / ${quest.target} ${quest.unit}',
+                  style: GoogleFonts.orbitron(
+                    color: SystemColors.textSecondary,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                Text(
+                  '+${quest.expReward} EXP  +2 ${quest.statReward.code}',
+                  style: GoogleFonts.orbitron(
+                    color: SystemColors.penaltyRed,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            // Quick action buttons
+            Row(
+              children: [
+                _buildEmergencyBtn(state, 1, '+1'),
+                const SizedBox(width: 6),
+                _buildEmergencyBtn(state, 5, '+5'),
+                const SizedBox(width: 6),
+                _buildEmergencyBtn(state, 10, '+10'),
+                const Spacer(),
+                InkWell(
+                  onTap: () => state.incrementEmergencyQuestProgress(
+                      quest.target - quest.current),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: SystemColors.penaltyRed,
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      'COMPLETE',
+                      style: GoogleFonts.orbitron(
+                        color: Colors.white,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 6),
+                InkWell(
+                  onTap: () => state.dismissEmergencyQuest(),
+                  borderRadius: BorderRadius.circular(4),
+                  child: Container(
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: Colors.white.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(
+                          color: Colors.white.withValues(alpha: 0.2)),
+                    ),
+                    child: Text(
+                      'DISMISS',
+                      style: GoogleFonts.orbitron(
+                        color: Colors.white54,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildEmergencyBtn(SystemState state, int amount, String label) {
+    return InkWell(
+      onTap: () => state.incrementEmergencyQuestProgress(amount),
+      borderRadius: BorderRadius.circular(4),
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+        decoration: BoxDecoration(
+          color: SystemColors.penaltyRed.withValues(alpha: 0.15),
+          borderRadius: BorderRadius.circular(4),
+          border: Border.all(color: SystemColors.penaltyRed, width: 0.8),
+        ),
+        child: Text(
+          label,
+          style: GoogleFonts.orbitron(
+            color: SystemColors.penaltyRed,
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),

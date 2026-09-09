@@ -30,6 +30,9 @@ class Quest {
   bool isDaily;
   bool isCompleted;
   int streak;
+  bool isEmergency;
+  String? deadline;
+  String? urgentReason;
 
   Quest({
     required this.id,
@@ -44,6 +47,9 @@ class Quest {
     this.isDaily = true,
     this.isCompleted = false,
     this.streak = 0,
+    this.isEmergency = false,
+    this.deadline,
+    this.urgentReason,
   });
 
   double get progress => target > 0 ? (current / target).clamp(0.0, 1.0) : 0.0;
@@ -61,6 +67,9 @@ class Quest {
     bool? isDaily,
     bool? isCompleted,
     int? streak,
+    bool? isEmergency,
+    String? deadline,
+    String? urgentReason,
   }) => Quest(
     id: id ?? this.id,
     title: title ?? this.title,
@@ -74,6 +83,9 @@ class Quest {
     isDaily: isDaily ?? this.isDaily,
     isCompleted: isCompleted ?? this.isCompleted,
     streak: streak ?? this.streak,
+    isEmergency: isEmergency ?? this.isEmergency,
+    deadline: deadline ?? this.deadline,
+    urgentReason: urgentReason ?? this.urgentReason,
   );
 
   Map<String, dynamic> toJson() => {
@@ -89,6 +101,9 @@ class Quest {
     'isDaily': isDaily,
     'isCompleted': isCompleted,
     'streak': streak,
+    'isEmergency': isEmergency,
+    'deadline': deadline,
+    'urgentReason': urgentReason,
   };
 
   factory Quest.fromJson(Map<String, dynamic> json) => Quest(
@@ -104,7 +119,34 @@ class Quest {
     isDaily: json['isDaily'] ?? true,
     isCompleted: json['isCompleted'] ?? false,
     streak: json['streak'] ?? 0,
+    isEmergency: json['isEmergency'] ?? false,
+    deadline: json['deadline'],
+    urgentReason: json['urgentReason'],
   );
+
+  /// Creates a dramatic emergency quest spawned by the autonomous system.
+  static Quest createEmergencyQuest({
+    required String title,
+    required String description,
+    required int target,
+    required String unit,
+    required StatType statReward,
+    String? urgentReason,
+  }) =>
+      Quest(
+        id: 'emergency_${DateTime.now().millisecondsSinceEpoch}',
+        title: title,
+        description: description,
+        target: target,
+        unit: unit,
+        statReward: statReward,
+        expReward: 200,
+        goldReward: 250,
+        isDaily: false,
+        isEmergency: true,
+        deadline: '23:59',
+        urgentReason: urgentReason ?? 'Player has demonstrated insufficient discipline.',
+      );
 
   static List<Quest> defaultSoloQuests() => [
     Quest(
