@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
-import 'screens/inventory_screen.dart';
+import 'screens/auth_screen.dart';
+import 'screens/progress_screen.dart';
 import 'screens/quest_screen.dart';
 import 'screens/status_screen.dart';
 import 'services/system_state.dart';
 import 'theme/system_theme.dart';
-import 'widgets/level_up_dialog.dart';
-import 'widgets/penalty_dialog.dart';
 import 'widgets/emergency_quest_dialog.dart';
-import 'widgets/achievement_dialog.dart';
 
 void main() {
   WidgetsFlutterBinding.ensureInitialized();
@@ -101,10 +99,15 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
       );
     }
 
+    // If not logged in, render the AuthScreen
+    if (!_systemState.isAuthenticated) {
+      return AuthScreen(state: _systemState);
+    }
+
     final screens = [
       StatusScreen(state: _systemState),
       QuestScreen(state: _systemState),
-      InventoryScreen(state: _systemState),
+      ProgressScreen(state: _systemState),
     ];
 
     return Scaffold(
@@ -125,83 +128,91 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
           // Main Screen Body
           screens[_currentIndex],
 
-          // Floating System Message Toast / Banner
+          // Floating Non-Blocking System Message Toast / Banner
           if (_systemState.lastSystemMessage != null)
             Positioned(
               top: 10,
-              left: 16,
-              right: 16,
-              child: InkWell(
-                onTap: () => _systemState.clearSystemMessage(),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: SystemColors.panelBg.withValues(alpha: 0.95),
-                    borderRadius: BorderRadius.circular(6),
-                    border: Border.all(color: SystemColors.cyanGlow, width: 1.2),
-                    boxShadow: [
-                      BoxShadow(
-                        color: SystemColors.cyanGlow.withValues(alpha: 0.4),
-                        blurRadius: 14,
+              left: 14,
+              right: 14,
+              child: TweenAnimationBuilder<double>(
+                duration: const Duration(milliseconds: 300),
+                tween: Tween(begin: 0.0, end: 1.0),
+                builder: (context, val, child) {
+                  return Transform.translate(
+                    offset: Offset(0, (1.0 - val) * -20),
+                    child: Opacity(
+                      opacity: val,
+                      child: child,
+                    ),
+                  );
+                },
+                child: InkWell(
+                  onTap: () => _systemState.clearSystemMessage(),
+                  borderRadius: BorderRadius.circular(8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: SystemColors.shadowBlack.withValues(alpha: 0.96),
+                      borderRadius: BorderRadius.circular(8),
+                      border: Border.all(
+                        color: _systemState.lastSystemMessage!.contains('EXECUTED')
+                            ? SystemColors.crimsonGlow
+                            : _systemState.lastSystemMessage!.contains('LEVEL UP') || _systemState.lastSystemMessage!.contains('ACHIEVEMENT')
+                                ? SystemColors.monarchViolet
+                                : SystemColors.cyanGlow,
+                        width: 1.4,
                       ),
-                    ],
-                  ),
-                  child: Row(
-                    children: [
-                      const Icon(Icons.notifications_active, color: SystemColors.cyanGlow, size: 20),
-                      const SizedBox(width: 10),
-                      Expanded(
-                        child: Text(
-                          _systemState.lastSystemMessage!,
-                          style: GoogleFonts.rajdhani(
-                            color: SystemColors.textPrimary,
-                            fontSize: 13,
-                            fontWeight: FontWeight.w600,
+                      boxShadow: [
+                        BoxShadow(
+                          color: _systemState.lastSystemMessage!.contains('EXECUTED')
+                              ? SystemColors.crimsonGlow.withValues(alpha: 0.35)
+                              : SystemColors.cyanGlow.withValues(alpha: 0.35),
+                          blurRadius: 16,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _systemState.lastSystemMessage!.contains('EXECUTED')
+                              ? Icons.flash_on
+                              : _systemState.lastSystemMessage!.contains('LEVEL UP')
+                                  ? Icons.military_tech
+                                  : Icons.notifications_active,
+                          color: _systemState.lastSystemMessage!.contains('EXECUTED')
+                              ? SystemColors.crimsonGlow
+                              : _systemState.lastSystemMessage!.contains('LEVEL UP')
+                                  ? SystemColors.monarchViolet
+                                  : SystemColors.cyanGlow,
+                          size: 20,
+                        ),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            _systemState.lastSystemMessage!,
+                            style: GoogleFonts.rajdhani(
+                              color: SystemColors.textPrimary,
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
-                      ),
-                      const Icon(Icons.close, color: Colors.white54, size: 16),
-                    ],
+                        const Icon(Icons.close, color: Colors.white38, size: 16),
+                      ],
+                    ),
                   ),
                 ),
               ),
             ),
 
-          // Level Up Modal Overlay
-          if (_systemState.showLevelUpModal)
-            Positioned.fill(
-              child: LevelUpDialog(
-                newLevel: _systemState.latestLevelAchieved,
-                onDismiss: () => _systemState.closeLevelUpModal(),
-              ),
-            ),
-
-          // Penalty Survival Modal Overlay
-          if (_systemState.isPenaltyActive)
-            Positioned.fill(
-              child: PenaltyDialog(
-                timeRemainingSeconds: _systemState.penaltyTimeRemainingSeconds,
-                onSurvive: () => _systemState.completePenaltyZone(),
-                onEscape: () => _systemState.escapePenaltyZone(),
-              ),
-            ),
-
-          // Emergency Quest Modal Overlay
+          // Emergency Quest Modal Overlay (if autonomous trigger explicitly activated)
           if (_systemState.showEmergencyQuestModal && _systemState.activeEmergencyQuest != null)
             Positioned.fill(
               child: EmergencyQuestDialog(
                 emergencyQuest: _systemState.activeEmergencyQuest!,
                 onDismiss: () => _systemState.dismissEmergencyQuestModal(),
                 onAccept: () => _systemState.dismissEmergencyQuestModal(),
-              ),
-            ),
-
-          // Achievement Unlocked Modal Overlay
-          if (_systemState.showAchievementModal && _systemState.latestUnlockedAchievement != null)
-            Positioned.fill(
-              child: AchievementDialog(
-                achievement: _systemState.latestUnlockedAchievement!,
-                onDismiss: () => _systemState.dismissAchievementModal(),
               ),
             ),
         ],
@@ -249,10 +260,11 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
         ],
       ),
       actions: [
+        // Level & Rank badge
         Center(
           child: Container(
-            margin: const EdgeInsets.only(right: 16),
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+            margin: const EdgeInsets.only(right: 8),
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
               color: Colors.black45,
               borderRadius: BorderRadius.circular(4),
@@ -265,16 +277,16 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                   'LV.${profile.level}',
                   style: GoogleFonts.orbitron(
                     color: SystemColors.cyanGlow,
-                    fontSize: 12,
+                    fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(width: 6),
+                const SizedBox(width: 4),
                 Text(
                   '[${profile.rank.label.split('-')[0]}]',
                   style: GoogleFonts.orbitron(
                     color: SystemColors.goldAccent,
-                    fontSize: 11,
+                    fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -282,6 +294,148 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
             ),
           ),
         ),
+
+        // Hunter Account Dropdown Menu
+        if (_systemState.currentUser != null)
+          PopupMenuButton<String>(
+            color: SystemColors.panelBg,
+            shape: RoundedRectangleBorder(
+              side: const BorderSide(color: SystemColors.cyanGlow, width: 1.2),
+              borderRadius: BorderRadius.circular(8),
+            ),
+            icon: Container(
+              padding: const EdgeInsets.all(4),
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                border: Border.all(
+                  color: _systemState.currentUser!.isGoogle
+                      ? Colors.blueAccent
+                      : _systemState.currentUser!.isGuest
+                          ? SystemColors.hpGreen
+                          : SystemColors.monarchViolet,
+                  width: 1.5,
+                ),
+              ),
+              child: Center(
+                child: Text(
+                  _systemState.currentUser!.displayName.isNotEmpty
+                      ? _systemState.currentUser!.displayName[0].toUpperCase()
+                      : 'H',
+                  style: GoogleFonts.orbitron(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+            onSelected: (value) {
+              if (value == 'sign_out') {
+                _systemState.signOut();
+              } else if (value.startsWith('switch_')) {
+                final uid = value.replaceFirst('switch_', '');
+                _systemState.switchAccount(uid);
+              }
+            },
+            itemBuilder: (ctx) {
+              final user = _systemState.currentUser!;
+              return [
+                PopupMenuItem<String>(
+                  enabled: false,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Text(user.provider.icon, style: const TextStyle(fontSize: 14)),
+                          const SizedBox(width: 8),
+                          Expanded(
+                            child: Text(
+                              user.displayName,
+                              style: GoogleFonts.orbitron(
+                                color: Colors.white,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              overflow: TextOverflow.ellipsis,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Text(
+                        user.email,
+                        style: GoogleFonts.rajdhani(
+                          color: SystemColors.textSecondary,
+                          fontSize: 11,
+                        ),
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        'Provider: ${user.provider.label}',
+                        style: GoogleFonts.rajdhani(
+                          color: SystemColors.cyanGlow,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const Divider(color: Colors.white24),
+                    ],
+                  ),
+                ),
+                if (_systemState.accounts.length > 1) ...[
+                  PopupMenuItem<String>(
+                    enabled: false,
+                    child: Text(
+                      'SWITCH IDENTITIES:',
+                      style: GoogleFonts.orbitron(color: SystemColors.textMuted, fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                  ..._systemState.accounts.where((a) => a.id != user.id).map(
+                        (acc) => PopupMenuItem<String>(
+                          value: 'switch_${acc.id}',
+                          child: Row(
+                            children: [
+                              Text(acc.provider.icon, style: const TextStyle(fontSize: 12)),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  acc.displayName,
+                                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                  const PopupMenuItem<String>(
+                    enabled: false,
+                    height: 8,
+                    child: Divider(color: Colors.white12),
+                  ),
+                ],
+                PopupMenuItem<String>(
+                  value: 'sign_out',
+                  child: Row(
+                    children: [
+                      const Icon(Icons.logout, color: SystemColors.crimsonGlow, size: 16),
+                      const SizedBox(width: 8),
+                      Text(
+                        'DISCONNECT / SIGN OUT',
+                        style: GoogleFonts.orbitron(
+                          color: SystemColors.crimsonGlow,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ];
+            },
+          ),
+        const SizedBox(width: 12),
       ],
       bottom: PreferredSize(
         preferredSize: const Size.fromHeight(1.5),
@@ -337,9 +491,9 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
             label: 'QUESTS',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.inventory_2),
-            activeIcon: Icon(Icons.inventory_2, color: SystemColors.cyanGlow),
-            label: 'VAULT',
+            icon: Icon(Icons.trending_up),
+            activeIcon: Icon(Icons.trending_up, color: SystemColors.cyanGlow),
+            label: 'PROGRESS',
           ),
         ],
       ),

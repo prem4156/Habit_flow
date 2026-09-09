@@ -265,12 +265,12 @@ class StatusScreen extends StatelessWidget {
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.monetization_on, color: SystemColors.goldAccent, size: 16),
+                        const Icon(Icons.check_circle, color: SystemColors.cyanGlow, size: 16),
                         const SizedBox(width: 4),
                         Text(
-                          '${profile.gold} Gold',
+                          '${state.totalQuestClears} Quests Cleared',
                           style: GoogleFonts.orbitron(
-                            color: SystemColors.goldAccent,
+                            color: SystemColors.cyanGlow,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -451,7 +451,7 @@ class StatusScreen extends StatelessWidget {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: SystemColors.penaltyRed,
+                        backgroundColor: SystemColors.crimsonGlow,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),

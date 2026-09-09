@@ -11,11 +11,19 @@ class SystemColors {
   static const Color blueGlow = Color(0xFF0084FF);
   static const Color darkBlue = Color(0xFF0E223D);
 
-  static const Color penaltyRed = Color(0xFFFF1E56);
-  static const Color penaltyDark = Color(0xFF2A0812);
+  static const Color crimsonGlow = Color(0xFFFF1E56);
+  static const Color crimsonDark = Color(0xFF2A0812);
+  static const Color monarchViolet = Color(0xFF9D4EDD);
+  static const Color monarchPurple = Color(0xFFA855F7);
+  static const Color monarchDark = Color(0xFF19092B);
+  static const Color shadowBlack = Color(0xFF03050C);
+
+  // Backward compatibility alias
+  static const Color penaltyRed = crimsonGlow;
+  static const Color penaltyDark = crimsonDark;
   
   static const Color goldAccent = Color(0xFFFFD700);
-  static const Color purpleShadow = Color(0xFFA855F7);
+  static const Color purpleShadow = monarchPurple;
 
   static const Color textPrimary = Color(0xFFE5F4FF);
   static const Color textSecondary = Color(0xFF7E97B8);
@@ -35,7 +43,7 @@ class SystemTheme {
         primary: SystemColors.cyanGlow,
         secondary: SystemColors.blueGlow,
         surface: SystemColors.panelBg,
-        error: SystemColors.penaltyRed,
+        error: SystemColors.crimsonGlow,
       ),
       textTheme: GoogleFonts.rajdhaniTextTheme(ThemeData.dark().textTheme).copyWith(
         displayLarge: GoogleFonts.orbitron(
@@ -94,10 +102,12 @@ class SystemTheme {
     );
   }
 
-  static BoxDecoration penaltyPanel() {
+  static BoxDecoration deadlyPanel() {
     return holographicPanel(
-      borderColor: SystemColors.penaltyRed,
+      borderColor: SystemColors.crimsonGlow,
       glowOpacity: 0.35,
     );
   }
+
+  static BoxDecoration penaltyPanel() => deadlyPanel();
 }

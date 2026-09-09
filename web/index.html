@@ -31,6 +31,18 @@
 
   <title>Monarch Protocol</title>
   <link rel="manifest" href="manifest.json">
+
+  <!--
+    Google Sign-In for Web (GIS / google_sign_in_web)
+    Replace YOUR_GOOGLE_CLIENT_ID below with your actual OAuth 2.0 Client ID from
+    https://console.cloud.google.com → APIs & Services → Credentials
+    Authorized origins must include: http://localhost:8080
+
+    Until a real Client ID is set, the app gracefully falls back to the
+    manual Gmail entry picker on web.
+  -->
+  <meta name="google-signin-client_id" content="YOUR_GOOGLE_CLIENT_ID.apps.googleusercontent.com">
+  <script src="https://accounts.google.com/gsi/client" async defer></script>
 </head>
 <body>
   <script src="flutter_bootstrap.js" async></script>

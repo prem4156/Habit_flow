@@ -112,12 +112,23 @@ void main() {
     expect(state.statGainsFromQuests['AGI'], 1);
   });
 
-  testWidgets('SoloLevelingHabitApp renders without errors and shows calendar HUD', (WidgetTester tester) async {
+  testWidgets('SoloLevelingHabitApp renders AuthScreen and logs in to show calendar HUD', (WidgetTester tester) async {
     await tester.pumpWidget(const SoloLevelingHabitApp());
     await tester.pumpAndSettle();
 
+    // Verify AuthScreen is rendered initially
+    expect(find.text('HUNTER IDENTIFICATION'), findsOneWidget);
+    expect(find.text('ENTER AS GUEST HUNTER'), findsOneWidget);
+
+    // Ensure visible and tap Guest Login to authenticate
+    final guestBtn = find.text('ENTER AS GUEST HUNTER');
+    await tester.ensureVisible(guestBtn);
+    await tester.tap(guestBtn);
+    await tester.pumpAndSettle();
+
+    // Verify Main screen is rendered
     expect(find.text('THE SYSTEM'), findsOneWidget);
-    expect(find.text('DAILY QUEST: PREPARING TO BECOME STRONG'), findsOneWidget);
+    expect(find.text('DAILY PROTOCOL: SHADOW AWAKENING'), findsOneWidget);
     expect(find.text('Push-ups'), findsOneWidget);
     expect(find.text('NEW TASK'), findsOneWidget);
   });
@@ -184,6 +195,55 @@ void main() {
     final theUnbroken = state.achievements.firstWhere((a) => a.id == 'the_unbroken');
     expect(theUnbroken.isUnlocked, false);
     expect(theUnbroken.maxProgress, 7);
+
+    state.dispose();
+  });
+
+  test('Realtime Auth: Guest mode instantly creates guest session', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    await state.signInAsGuest();
+    expect(state.isAuthenticated, true);
+    expect(state.currentUser!.isGuest, true);
+    expect(state.currentUser!.displayName.contains('Shadow Recruit'), true);
+
+    state.dispose();
+  });
+
+  test('Realtime Auth: Google Sign-In initializes Google verified account', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    await state.signInWithGoogle(
+      email: 'test.hunter@gmail.com',
+      displayName: 'Sung Jin-Woo',
+    );
+    expect(state.isAuthenticated, true);
+    expect(state.currentUser!.isGoogle, true);
+    expect(state.currentUser!.email, 'test.hunter@gmail.com');
+    expect(state.currentUser!.displayName, 'Sung Jin-Woo');
+
+    state.dispose();
+  });
+
+  test('Realtime Auth: Email sign up and sign in flow works in realtime', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    final signUpSuccess = await state.signUpWithEmail('cha.hae.in@gmail.com', 'sword123', 'Cha Hae-In');
+    expect(signUpSuccess, true);
+    expect(state.currentUser!.email, 'cha.hae.in@gmail.com');
+    expect(state.currentUser!.displayName, 'Cha Hae-In');
+
+    // Sign out
+    await state.signOut();
+    expect(state.isAuthenticated, false);
+
+    // Sign in back
+    final signInSuccess = await state.signInWithEmail('cha.hae.in@gmail.com', 'sword123');
+    expect(signInSuccess, true);
+    expect(state.currentUser!.displayName, 'Cha Hae-In');
 
     state.dispose();
   });

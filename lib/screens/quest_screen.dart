@@ -5,6 +5,7 @@ import '../services/system_state.dart';
 import '../theme/system_theme.dart';
 import '../widgets/calendar_hud_bar.dart';
 import '../widgets/system_window.dart';
+import '../widgets/deadly_quest_card.dart';
 
 class QuestScreen extends StatefulWidget {
   final SystemState state;
@@ -310,9 +311,9 @@ class _QuestScreenState extends State<QuestScreen> {
     final completedCount = completedQuests.length;
     final ratio = totalCount > 0 ? (completedCount / totalCount).clamp(0.0, 1.0) : 0.0;
 
-    String bannerTitle = 'DAILY QUEST: PREPARING TO BECOME STRONG';
+    String bannerTitle = 'DAILY PROTOCOL: SHADOW AWAKENING';
     String bannerSubtitle =
-        'GOAL: Complete all physical training and daily rituals before midnight to avert the Penalty Zone.';
+        'GOAL: Complete all physical training and daily rituals to expand the Shadow Monarch realm.';
     if (isPast) {
       bannerTitle = 'HISTORICAL LOG: ${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
       bannerSubtitle = 'ARCHIVED PROTOCOL: Inspecting past daily task completions and performance.';
@@ -406,17 +407,28 @@ class _QuestScreenState extends State<QuestScreen> {
                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         ),
                       ),
-                    ElevatedButton.icon(
-                      onPressed: () => state.triggerPenaltyZone(),
-                      icon: const Icon(Icons.warning, size: 14, color: Colors.white),
-                      label: Text(
-                        'PENALTY ZONE',
-                        style: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: SystemColors.monarchViolet.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(4),
+                        border: Border.all(color: SystemColors.monarchViolet.withValues(alpha: 0.6), width: 1),
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: SystemColors.penaltyRed,
-                        foregroundColor: Colors.white,
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Icons.flash_on, size: 13, color: SystemColors.monarchViolet),
+                          const SizedBox(width: 4),
+                          Text(
+                            'DEADLY DISCIPLINE',
+                            style: GoogleFonts.orbitron(
+                              fontSize: 9,
+                              color: SystemColors.monarchViolet,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 0.8,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ],
@@ -437,7 +449,7 @@ class _QuestScreenState extends State<QuestScreen> {
             children: [
               Row(
                 children: [
-                  Icon(Icons.check_box_outlined, color: SystemColors.cyanGlow, size: 18),
+                  const Icon(Icons.check_box_outlined, color: SystemColors.cyanGlow, size: 18),
                   const SizedBox(width: 8),
                   Text(
                     'TASKS • ${activeQuests.length} PENDING',
@@ -516,7 +528,14 @@ class _QuestScreenState extends State<QuestScreen> {
               ),
             )
           else
-            ...activeQuests.map((quest) => _buildActiveQuestCard(context, quest, selectedDate)),
+            ...activeQuests.map((quest) => DeadlyQuestCard(
+                  key: ValueKey('active_${quest.id}_${selectedDate.millisecondsSinceEpoch}'),
+                  quest: quest,
+                  date: selectedDate,
+                  state: state,
+                  onAttributeTap: () => _showAttributeSelectionDialog(context, quest),
+                  isCompleted: false,
+                )),
 
           const SizedBox(height: 16),
 
@@ -554,7 +573,7 @@ class _QuestScreenState extends State<QuestScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Expanded(
+                        const Expanded(
                           child: Divider(
                             color: Colors.white12,
                             thickness: 1,
@@ -566,316 +585,20 @@ class _QuestScreenState extends State<QuestScreen> {
                 ),
                 if (_showCompletedQuests)
                   ...completedQuests.map(
-                    (quest) => _buildCompletedQuestCard(context, quest, selectedDate),
+                    (quest) => DeadlyQuestCard(
+                      key: ValueKey('done_${quest.id}_${selectedDate.millisecondsSinceEpoch}'),
+                      quest: quest,
+                      date: selectedDate,
+                      state: state,
+                      onAttributeTap: () => _showAttributeSelectionDialog(context, quest),
+                      isCompleted: true,
+                    ),
                   ),
               ],
             ),
 
           const SizedBox(height: 32),
         ],
-      ),
-    );
-  }
-
-  // Active Quest Card (Google Tasks style with check-circle and quick progression)
-  Widget _buildActiveQuestCard(BuildContext context, Quest quest, DateTime date) {
-    final state = widget.state;
-    final isCustom = quest.id.startsWith('custom_');
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 6.0),
-      padding: const EdgeInsets.all(12.0),
-      decoration: BoxDecoration(
-        color: SystemColors.panelBg,
-        borderRadius: BorderRadius.circular(8.0),
-        border: Border.all(
-          color: SystemColors.cyanGlow.withValues(alpha: 0.4),
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: SystemColors.cyanGlow.withValues(alpha: 0.08),
-            blurRadius: 8,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              // Google Tasks Checkbox (One-tap complete)
-              InkWell(
-                onTap: () => state.toggleQuestComplete(quest.id, date: date),
-                borderRadius: BorderRadius.circular(20),
-                child: Container(
-                  width: 26,
-                  height: 26,
-                  decoration: BoxDecoration(
-                    shape: BoxShape.circle,
-                    border: Border.all(color: SystemColors.cyanGlow, width: 2),
-                    color: Colors.black26,
-                  ),
-                  child: const Center(
-                    child: Icon(Icons.circle, color: Colors.transparent, size: 14),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      quest.title,
-                      style: GoogleFonts.orbitron(
-                        color: Colors.white,
-                        fontSize: 14,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      quest.description,
-                      style: GoogleFonts.rajdhani(
-                        color: SystemColors.textSecondary,
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 8),
-              // Attribute Badge with interactive attribute selector (+1 STR ▾)
-              InkWell(
-                onTap: () => _showAttributeSelectionDialog(context, quest),
-                borderRadius: BorderRadius.circular(4),
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                  decoration: BoxDecoration(
-                    color: SystemColors.cyanGlow.withValues(alpha: 0.12),
-                    borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: SystemColors.cyanGlow.withValues(alpha: 0.5)),
-                  ),
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        '+1 ${quest.statReward.code}',
-                        style: GoogleFonts.orbitron(
-                          color: SystemColors.cyanGlow,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      const SizedBox(width: 2),
-                      const Icon(Icons.arrow_drop_down, color: SystemColors.cyanGlow, size: 14),
-                    ],
-                  ),
-                ),
-              ),
-              if (isCustom)
-                IconButton(
-                  icon: const Icon(Icons.delete_outline, size: 16, color: Colors.white38),
-                  onPressed: () => state.deleteQuest(quest.id),
-                  tooltip: 'Delete Habit',
-                ),
-            ],
-          ),
-          const SizedBox(height: 10),
-
-          // Linear Progress Bar & Counter
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                '[ ${quest.current} / ${quest.target} ${quest.unit} ]',
-                style: GoogleFonts.orbitron(
-                  color: SystemColors.cyanGlow,
-                  fontSize: 12,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-              if (quest.streak > 0)
-                Row(
-                  children: [
-                    const Icon(Icons.local_fire_department, color: Colors.deepOrangeAccent, size: 14),
-                    Text(
-                      '${quest.streak} Day Streak',
-                      style: GoogleFonts.rajdhani(
-                        color: Colors.deepOrangeAccent,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-            ],
-          ),
-          const SizedBox(height: 6),
-          ClipRRect(
-            borderRadius: BorderRadius.circular(3),
-            child: LinearProgressIndicator(
-              value: quest.progress,
-              minHeight: 6,
-              backgroundColor: Colors.black45,
-              valueColor: const AlwaysStoppedAnimation<Color>(SystemColors.cyanGlow),
-            ),
-          ),
-          const SizedBox(height: 10),
-
-          // Stepper / Quick Add Buttons
-          _buildProgressButtons(quest, date),
-        ],
-      ),
-    );
-  }
-
-  // Completed Quest Card (Google Tasks style: strikethrough, dim, uncheck option)
-  Widget _buildCompletedQuestCard(BuildContext context, Quest quest, DateTime date) {
-    final state = widget.state;
-
-    return Container(
-      margin: const EdgeInsets.symmetric(vertical: 4.0),
-      padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
-      decoration: BoxDecoration(
-        color: Colors.black26,
-        borderRadius: BorderRadius.circular(6.0),
-        border: Border.all(
-          color: SystemColors.hpGreen.withValues(alpha: 0.3),
-          width: 0.8,
-        ),
-      ),
-      child: Row(
-        children: [
-          // Google Tasks Checked Box (Tap to uncheck/reopen)
-          InkWell(
-            onTap: () => state.toggleQuestComplete(quest.id, date: date),
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: SystemColors.hpGreen,
-              ),
-              child: const Center(
-                child: Icon(Icons.check, color: Colors.black, size: 16),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  quest.title,
-                  style: GoogleFonts.orbitron(
-                    color: Colors.white54,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: Colors.white38,
-                  ),
-                ),
-                Text(
-                  'Completed • ${quest.target} ${quest.unit}',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white38,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          InkWell(
-            onTap: () => _showAttributeSelectionDialog(context, quest),
-            borderRadius: BorderRadius.circular(4),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: SystemColors.hpGreen.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: SystemColors.hpGreen.withValues(alpha: 0.4)),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '[ CLEARED • +1 ${quest.statReward.code} ]',
-                    style: GoogleFonts.orbitron(
-                      color: SystemColors.hpGreen,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(width: 2),
-                  const Icon(Icons.arrow_drop_down, color: SystemColors.hpGreen, size: 12),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildProgressButtons(Quest quest, DateTime date) {
-    if (quest.target >= 100) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _buildQuickAddBtn(quest, 10, '+10', date),
-          const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, 25, '+25', date),
-          const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, quest.target - quest.current, 'DONE', date, isMax: true),
-        ],
-      );
-    } else if (quest.target >= 10) {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _buildQuickAddBtn(quest, 1, '+1', date),
-          const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, 5, '+5', date),
-          const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, quest.target - quest.current, 'DONE', date, isMax: true),
-        ],
-      );
-    } else {
-      return Row(
-        mainAxisAlignment: MainAxisAlignment.end,
-        children: [
-          _buildQuickAddBtn(quest, 1, '+1', date),
-          const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, quest.target - quest.current, 'COMPLETE', date, isMax: true),
-        ],
-      );
-    }
-  }
-
-  Widget _buildQuickAddBtn(Quest quest, int amount, String label, DateTime date, {bool isMax = false}) {
-    return InkWell(
-      onTap: () => widget.state.incrementQuestProgress(quest.id, amount, date: date),
-      borderRadius: BorderRadius.circular(4),
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-        decoration: BoxDecoration(
-          color: isMax ? SystemColors.cyanGlow : SystemColors.cyanGlow.withValues(alpha: 0.12),
-          borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: SystemColors.cyanGlow, width: 0.8),
-        ),
-        child: Text(
-          label,
-          style: GoogleFonts.orbitron(
-            color: isMax ? Colors.black : SystemColors.cyanGlow,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
       ),
     );
   }
@@ -889,12 +612,12 @@ class _QuestScreenState extends State<QuestScreen> {
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: SystemColors.penaltyDark,
+          color: SystemColors.crimsonDark,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: SystemColors.penaltyRed, width: 1.5),
+          border: Border.all(color: SystemColors.crimsonGlow, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: SystemColors.penaltyRed.withValues(alpha: 0.3),
+              color: SystemColors.crimsonGlow.withValues(alpha: 0.3),
               blurRadius: 16,
               spreadRadius: 1,
             ),
@@ -906,13 +629,13 @@ class _QuestScreenState extends State<QuestScreen> {
             Row(
               children: [
                 const Icon(Icons.warning_amber_rounded,
-                    color: SystemColors.penaltyRed, size: 18),
+                    color: SystemColors.crimsonGlow, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     '⚠ EMERGENCY DIRECTIVE',
                     style: GoogleFonts.orbitron(
-                      color: SystemColors.penaltyRed,
+                      color: SystemColors.crimsonGlow,
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.5,
@@ -923,14 +646,14 @@ class _QuestScreenState extends State<QuestScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: SystemColors.penaltyRed.withValues(alpha: 0.2),
+                    color: SystemColors.crimsonGlow.withValues(alpha: 0.2),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: SystemColors.penaltyRed),
+                    border: Border.all(color: SystemColors.crimsonGlow),
                   ),
                   child: Text(
                     'DEADLINE ${quest.deadline ?? "23:59"}',
                     style: GoogleFonts.orbitron(
-                      color: SystemColors.penaltyRed,
+                      color: SystemColors.crimsonGlow,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -966,7 +689,7 @@ class _QuestScreenState extends State<QuestScreen> {
                 minHeight: 8,
                 backgroundColor: Colors.black45,
                 valueColor: const AlwaysStoppedAnimation<Color>(
-                    SystemColors.penaltyRed),
+                    SystemColors.crimsonGlow),
               ),
             ),
             const SizedBox(height: 6),
@@ -984,7 +707,7 @@ class _QuestScreenState extends State<QuestScreen> {
                 Text(
                   '+${quest.expReward} EXP  +2 ${quest.statReward.code}',
                   style: GoogleFonts.orbitron(
-                    color: SystemColors.penaltyRed,
+                    color: SystemColors.crimsonGlow,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -1009,7 +732,7 @@ class _QuestScreenState extends State<QuestScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: SystemColors.penaltyRed,
+                      color: SystemColors.crimsonGlow,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -1060,14 +783,14 @@ class _QuestScreenState extends State<QuestScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: SystemColors.penaltyRed.withValues(alpha: 0.15),
+          color: SystemColors.crimsonGlow.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: SystemColors.penaltyRed, width: 0.8),
+          border: Border.all(color: SystemColors.crimsonGlow, width: 0.8),
         ),
         child: Text(
           label,
           style: GoogleFonts.orbitron(
-            color: SystemColors.penaltyRed,
+            color: SystemColors.crimsonGlow,
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),
