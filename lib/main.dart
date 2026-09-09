@@ -19,7 +19,7 @@ class SoloLevelingHabitApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'HabitFlow • The System',
+      title: 'Monarch Protocol • The System',
       debugShowCheckedModeBanner: false,
       theme: SystemTheme.darkTheme,
       home: const MainSystemScreen(),
@@ -217,7 +217,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
           ),
           const SizedBox(width: 10),
           Text(
-            'HABITFLOW',
+            'MONARCH PROTOCOL',
             style: GoogleFonts.orbitron(
               color: Colors.white,
               fontSize: 14,

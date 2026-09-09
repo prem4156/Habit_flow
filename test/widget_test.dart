@@ -1,8 +1,8 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:habit_flow/main.dart';
-import 'package:habit_flow/models/quest_model.dart';
-import 'package:habit_flow/services/system_state.dart';
+import 'package:monarch_protocol/main.dart';
+import 'package:monarch_protocol/models/quest_model.dart';
+import 'package:monarch_protocol/services/system_state.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
