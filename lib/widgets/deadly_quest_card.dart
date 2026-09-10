@@ -5,6 +5,7 @@ import 'package:google_fonts/google_fonts.dart';
 import '../models/quest_model.dart';
 import '../services/system_state.dart';
 import '../theme/system_theme.dart';
+import 'habit_day_tracker_grid.dart';
 
 class DeadlyQuestCard extends StatefulWidget {
   final Quest quest;
@@ -363,7 +364,16 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                       ),
                     ),
 
-                    const SizedBox(height: 10),
+                    const SizedBox(height: 8),
+
+                    // Day Tracker Grid (Heatmap Matrix below habit)
+                    HabitDayTrackerGrid(
+                      questId: quest.id,
+                      state: widget.state,
+                      activeColor: SystemColors.goldAccent,
+                    ),
+
+                    const SizedBox(height: 8),
 
                     // Quick Progression Stepper Buttons
                     _buildProgressButtons(context, quest, date),
@@ -480,84 +490,99 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
           width: 0.8,
         ),
       ),
-      child: Row(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          // Checked Box (Tap to uncheck/reopen with tactile click)
-          InkWell(
-            onTap: () {
-              try {
-                HapticFeedback.selectionClick();
-              } catch (_) {}
-              widget.state.toggleQuestComplete(quest.id, date: date);
-            },
-            borderRadius: BorderRadius.circular(20),
-            child: Container(
-              width: 24,
-              height: 24,
-              decoration: const BoxDecoration(
-                shape: BoxShape.circle,
-                color: SystemColors.hpGreen,
-              ),
-              child: const Center(
-                child: Icon(Icons.check, color: Colors.black, size: 16),
-              ),
-            ),
-          ),
-          const SizedBox(width: 10),
-
-          // Title with Strikethrough
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  quest.title,
-                  style: GoogleFonts.orbitron(
-                    color: Colors.white54,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    decoration: TextDecoration.lineThrough,
-                    decorationColor: SystemColors.hpGreen.withValues(alpha: 0.6),
+          Row(
+            children: [
+              // Checked Box (Tap to uncheck/reopen with tactile click)
+              InkWell(
+                onTap: () {
+                  try {
+                    HapticFeedback.selectionClick();
+                  } catch (_) {}
+                  widget.state.toggleQuestComplete(quest.id, date: date);
+                },
+                borderRadius: BorderRadius.circular(20),
+                child: Container(
+                  width: 24,
+                  height: 24,
+                  decoration: const BoxDecoration(
+                    shape: BoxShape.circle,
+                    color: SystemColors.hpGreen,
+                  ),
+                  child: const Center(
+                    child: Icon(Icons.check, color: Colors.black, size: 16),
                   ),
                 ),
-                Text(
-                  'Executed • ${quest.target} ${quest.unit} • +${quest.expReward} EXP',
-                  style: GoogleFonts.rajdhani(
-                    color: Colors.white38,
-                    fontSize: 11,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Cleared Badge
-          InkWell(
-            onTap: widget.onAttributeTap,
-            borderRadius: BorderRadius.circular(4),
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-              decoration: BoxDecoration(
-                color: SystemColors.hpGreen.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: SystemColors.hpGreen.withValues(alpha: 0.4)),
               ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    '[ CLEARED • +1 ${quest.statReward.code} ]',
-                    style: GoogleFonts.orbitron(
-                      color: SystemColors.hpGreen,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+              const SizedBox(width: 10),
+
+              // Title with Strikethrough
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      quest.title,
+                      style: GoogleFonts.orbitron(
+                        color: Colors.white54,
+                        fontSize: 13,
+                        fontWeight: FontWeight.w600,
+                        decoration: TextDecoration.lineThrough,
+                        decorationColor: SystemColors.hpGreen.withValues(alpha: 0.6),
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 2),
-                  const Icon(Icons.arrow_drop_down, color: SystemColors.hpGreen, size: 12),
-                ],
+                    Text(
+                      'Executed • ${quest.target} ${quest.unit} • +${quest.expReward} EXP',
+                      style: GoogleFonts.rajdhani(
+                        color: Colors.white38,
+                        fontSize: 11,
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            ),
+
+              // Cleared Badge
+              InkWell(
+                onTap: widget.onAttributeTap,
+                borderRadius: BorderRadius.circular(4),
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                  decoration: BoxDecoration(
+                    color: SystemColors.hpGreen.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(4),
+                    border: Border.all(color: SystemColors.hpGreen.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        '[ CLEARED • +1 ${quest.statReward.code} ]',
+                        style: GoogleFonts.orbitron(
+                          color: SystemColors.hpGreen,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(width: 2),
+                      const Icon(Icons.arrow_drop_down, color: SystemColors.hpGreen, size: 12),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 6),
+
+          // Day Tracker Grid (Heatmap Matrix below habit)
+          HabitDayTrackerGrid(
+            questId: quest.id,
+            state: widget.state,
+            activeColor: SystemColors.hpGreen,
           ),
         ],
       ),

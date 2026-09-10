@@ -62,6 +62,38 @@ class AuthUser {
     lastLoginAt: DateTime.tryParse(json['lastLoginAt'] as String? ?? '') ?? DateTime.now(),
   );
 
+  factory AuthUser.fromFirebaseUser(dynamic user) {
+    // Accepts firebase_auth.User or dynamic
+    final isAnon = user.isAnonymous == true;
+    final email = (user.email as String?) ?? (isAnon ? 'guest@monarch.system' : '');
+    final name = (user.displayName as String?) ??
+        (isAnon ? 'Guest Hunter' : (email.contains('@') ? email.split('@').first : 'Hunter'));
+    final photo = user.photoURL as String?;
+
+    AuthProviderType provider = AuthProviderType.email;
+    if (isAnon) {
+      provider = AuthProviderType.guest;
+    } else {
+      final providerData = user.providerData as List<dynamic>? ?? [];
+      for (final p in providerData) {
+        if (p.providerId == 'google.com') {
+          provider = AuthProviderType.google;
+          break;
+        }
+      }
+    }
+
+    return AuthUser(
+      id: user.uid as String,
+      email: email,
+      displayName: name.isNotEmpty ? name : 'Hunter',
+      photoUrl: photo,
+      provider: provider,
+      createdAt: user.metadata?.creationTime ?? DateTime.now(),
+      lastLoginAt: user.metadata?.lastSignInTime ?? DateTime.now(),
+    );
+  }
+
   AuthUser copyWith({
     String? id,
     String? email,

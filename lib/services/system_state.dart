@@ -2,12 +2,12 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
-import 'package:google_sign_in/google_sign_in.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_user_model.dart';
 import '../models/hunter_model.dart';
 import '../models/quest_model.dart';
 import '../models/achievement_model.dart';
+import 'auth_service.dart';
 
 class SystemState extends ChangeNotifier {
   static const String _prefCurrentAuthUserKey = 'sl_auth_current_user_id';
@@ -262,7 +262,7 @@ class SystemState extends ChangeNotifier {
       final List list = jsonDecode(questsStr);
       _quests = list.map((q) => Quest.fromJson(q)).toList();
     } else {
-      _quests = Quest.defaultSoloQuests();
+      _quests = [];
     }
 
     final progressStr = prefs.getString(_userPref(_prefDailyProgressKey));
@@ -365,10 +365,58 @@ class SystemState extends ChangeNotifier {
   // --- REAL-TIME AUTHENTICATION API ---
   // =============================================
 
+  Future<void> onUserAuthenticated(AuthUser authUser) async {
+    _currentUser = authUser;
+
+    final existingIndex = _accounts.indexWhere(
+      (a) =>
+          a.id == authUser.id ||
+          (authUser.email.isNotEmpty &&
+              a.email.toLowerCase() == authUser.email.toLowerCase()),
+    );
+
+    if (existingIndex != -1) {
+      _accounts[existingIndex] = authUser.copyWith(
+        displayName: authUser.displayName.isNotEmpty
+            ? authUser.displayName
+            : _accounts[existingIndex].displayName,
+        photoUrl: authUser.photoUrl ?? _accounts[existingIndex].photoUrl,
+        lastLoginAt: DateTime.now(),
+      );
+      _currentUser = _accounts[existingIndex];
+    } else {
+      _accounts.add(authUser);
+    }
+
+    final prefs = await SharedPreferences.getInstance();
+    await _saveAuthAccounts(prefs);
+    await _loadUserData(prefs);
+
+    postSystemMessage(
+      '⚡ [AUTH] Hunter ${authUser.displayName} connected. Protocol synchronized.',
+    );
+    notifyListeners();
+  }
+
   Future<bool> signInWithEmail(String email, String password) async {
     final cleanEmail = email.trim().toLowerCase();
     final cleanPass = password.trim();
 
+    // 1. Try Firebase Auth first
+    try {
+      final fbUser = await AuthService.instance.signInWithEmail(
+        cleanEmail,
+        cleanPass,
+      );
+      if (fbUser != null) {
+        await onUserAuthenticated(fbUser);
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Firebase sign in note: $e');
+    }
+
+    // 2. Fallback to local accounts
     final user = _accounts.firstWhere(
       (a) => a.email.toLowerCase() == cleanEmail,
       orElse: () => AuthUser(
@@ -392,36 +440,56 @@ class SystemState extends ChangeNotifier {
       return false;
     }
 
-    _currentUser = user.copyWith(lastLoginAt: DateTime.now());
-    final index = _accounts.indexWhere((a) => a.id == user.id);
-    if (index != -1) _accounts[index] = _currentUser!;
-
-    final prefs = await SharedPreferences.getInstance();
-    await _saveAuthAccounts(prefs);
-    await _loadUserData(prefs);
-
-    postSystemMessage('⚡ [SYSTEM] Welcome back, Hunter ${_currentUser!.displayName}! Data synchronized.');
-    notifyListeners();
+    await onUserAuthenticated(user.copyWith(lastLoginAt: DateTime.now()));
     return true;
   }
 
-  Future<bool> signUpWithEmail(String email, String password, String hunterName) async {
+  Future<bool> signUpWithEmail(
+    String email,
+    String password,
+    String hunterName,
+  ) async {
     final cleanEmail = email.trim().toLowerCase();
     final cleanPass = password.trim();
     final cleanName = hunterName.trim().isEmpty ? 'Hunter' : hunterName.trim();
 
     if (cleanEmail.isEmpty || !cleanEmail.contains('@')) {
-      postSystemMessage('❌ [AUTH ERROR] Please enter a valid Gmail / Email address.');
+      postSystemMessage(
+        '❌ [AUTH ERROR] Please enter a valid Gmail / Email address.',
+      );
       return false;
     }
 
     if (cleanPass.length < 4) {
-      postSystemMessage('❌ [AUTH ERROR] Security passcode must be at least 4 characters.');
+      postSystemMessage(
+        '❌ [AUTH ERROR] Security passcode must be at least 4 characters.',
+      );
       return false;
     }
 
+    // 1. Try Firebase Auth first
+    try {
+      final fbUser = await AuthService.instance.signUpWithEmail(
+        cleanEmail,
+        cleanPass,
+        cleanName,
+      );
+      if (fbUser != null) {
+        await onUserAuthenticated(fbUser);
+        postSystemMessage(
+          '👑 [AWAKENING] New Hunter Protocol Registered: $cleanName.',
+        );
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Firebase sign up note: $e');
+    }
+
+    // 2. Fallback to local registration
     if (_accounts.any((a) => a.email.toLowerCase() == cleanEmail)) {
-      postSystemMessage('❌ [AUTH ERROR] Hunter account already exists with $cleanEmail. Please Sign In.');
+      postSystemMessage(
+        '❌ [AUTH ERROR] Hunter account already exists with $cleanEmail. Please Sign In.',
+      );
       return false;
     }
 
@@ -436,21 +504,10 @@ class SystemState extends ChangeNotifier {
 
     _accounts.add(newUser);
     _passwords[cleanEmail] = cleanPass;
-    _currentUser = newUser;
-
-    _profile = HunterProfile(name: cleanName);
-    _quests = Quest.defaultSoloQuests();
-    _dailyProgress = {};
-    _dailyCompleted = {};
-    _statGainsFromQuests = {'STR': 0, 'AGI': 0, 'VIT': 0, 'INT': 0, 'PER': 0};
-    _achievements = Achievement.defaultAchievements();
-    _totalQuestClears = 0;
-    _consecutivePerfectDays = 0;
-    _bestStreak = 0;
-
-    await saveState();
-    postSystemMessage('👑 [AWAKENING] New Hunter Protocol Registered: $cleanName.');
-    notifyListeners();
+    await onUserAuthenticated(newUser);
+    postSystemMessage(
+      '👑 [AWAKENING] New Hunter Protocol Registered: $cleanName.',
+    );
     return true;
   }
 
@@ -460,100 +517,38 @@ class SystemState extends ChangeNotifier {
     String? photoUrl,
     bool tryDeviceAuth = true,
   }) async {
-    // 1. Try real device Google Sign-In (Phone Android / iOS native account selector)
-    if (tryDeviceAuth && email == null) {
-      try {
-        final GoogleSignIn googleSignIn = GoogleSignIn(
-          scopes: ['email', 'profile'],
-        );
-        final GoogleSignInAccount? account = await googleSignIn.signIn();
-        if (account != null) {
-          final realEmail = account.email.trim().toLowerCase();
-          final realName = account.displayName?.trim().isNotEmpty == true
-              ? account.displayName!.trim()
-              : realEmail.split('@').first;
-          final realPhoto = account.photoUrl;
-
-          AuthUser user;
-          final existingIndex = _accounts.indexWhere((a) => a.email.toLowerCase() == realEmail);
-          if (existingIndex != -1) {
-            user = _accounts[existingIndex].copyWith(
-              displayName: realName,
-              photoUrl: realPhoto ?? _accounts[existingIndex].photoUrl,
-              lastLoginAt: DateTime.now(),
-            );
-            _accounts[existingIndex] = user;
-          } else {
-            user = AuthUser(
-              id: account.id.isNotEmpty
-                  ? 'goog_${account.id}'
-                  : 'goog_${DateTime.now().millisecondsSinceEpoch}',
-              email: realEmail,
-              displayName: realName,
-              photoUrl: realPhoto ?? 'https://lh3.googleusercontent.com/a/default-user',
-              provider: AuthProviderType.google,
-              createdAt: DateTime.now(),
-              lastLoginAt: DateTime.now(),
-            );
-            _accounts.add(user);
-          }
-
-          _currentUser = user;
-          final prefs = await SharedPreferences.getInstance();
-          await _saveAuthAccounts(prefs);
-          await _loadUserData(prefs);
-
-          postSystemMessage('🌐 [GOOGLE SIGN-IN] Phone Account Connected: $realName ($realEmail).');
-          notifyListeners();
-          return true;
-        } else {
-          // User closed/cancelled Google account picker dialog
-          return false;
-        }
-      } catch (e) {
-        debugPrint('Device Google Sign-In error / fallback: $e');
-        // Will continue to fallback if email was provided or prompt in UI
+    try {
+      final authUser = await AuthService.instance.signInWithGoogle(
+        email: email,
+        displayName: displayName,
+        photoUrl: photoUrl,
+        tryDeviceAuth: tryDeviceAuth,
+      );
+      if (authUser != null) {
+        await onUserAuthenticated(authUser);
+        return true;
       }
-    }
-
-    // 2. Direct or Fallback Google Sign-In
-    final randId = Random().nextInt(9000) + 1000;
-    final googleEmail = email?.trim().toLowerCase() ?? 'hunter.$randId@gmail.com';
-    final googleName = displayName?.trim().isNotEmpty == true ? displayName!.trim() : 'Hunter $randId';
-
-    AuthUser user;
-    final existingIndex = _accounts.indexWhere((a) => a.email.toLowerCase() == googleEmail);
-    if (existingIndex != -1) {
-      user = _accounts[existingIndex].copyWith(
-        displayName: googleName,
-        photoUrl: photoUrl ?? _accounts[existingIndex].photoUrl,
-        lastLoginAt: DateTime.now(),
+      return false;
+    } catch (e) {
+      debugPrint('Real Google Sign-In error: $e');
+      postSystemMessage(
+        '❌ [AUTH ERROR] Google Sign-In failed: ${e.toString().replaceAll("Exception:", "").trim()}',
       );
-      _accounts[existingIndex] = user;
-    } else {
-      user = AuthUser(
-        id: 'goog_${DateTime.now().millisecondsSinceEpoch}_$randId',
-        email: googleEmail,
-        displayName: googleName,
-        photoUrl: photoUrl ?? 'https://lh3.googleusercontent.com/a/default-user',
-        provider: AuthProviderType.google,
-        createdAt: DateTime.now(),
-        lastLoginAt: DateTime.now(),
-      );
-      _accounts.add(user);
+      return false;
     }
-
-    _currentUser = user;
-    final prefs = await SharedPreferences.getInstance();
-    await _saveAuthAccounts(prefs);
-    await _loadUserData(prefs);
-
-    postSystemMessage('🌐 [GOOGLE SIGN-IN] Verified: $googleName ($googleEmail).');
-    notifyListeners();
-    return true;
   }
 
   Future<void> signInAsGuest() async {
+    try {
+      final guestUser = await AuthService.instance.signInAsGuest();
+      if (guestUser != null) {
+        await onUserAuthenticated(guestUser);
+        return;
+      }
+    } catch (e) {
+      debugPrint('Guest sign-in error: $e');
+    }
+
     final randId = Random().nextInt(9000) + 1000;
     final guestUser = AuthUser(
       id: 'guest_${DateTime.now().millisecondsSinceEpoch}',
@@ -563,20 +558,7 @@ class SystemState extends ChangeNotifier {
       createdAt: DateTime.now(),
       lastLoginAt: DateTime.now(),
     );
-
-    _accounts.add(guestUser);
-    _currentUser = guestUser;
-
-    _profile = HunterProfile(name: guestUser.displayName);
-    _quests = Quest.defaultSoloQuests();
-    _dailyProgress = {};
-    _dailyCompleted = {};
-    _statGainsFromQuests = {'STR': 0, 'AGI': 0, 'VIT': 0, 'INT': 0, 'PER': 0};
-    _achievements = Achievement.defaultAchievements();
-
-    await saveState();
-    postSystemMessage('👤 [GUEST AWAKENING] Logged in as ${guestUser.displayName}.');
-    notifyListeners();
+    await onUserAuthenticated(guestUser);
   }
 
   Future<void> signOut() async {
@@ -585,6 +567,8 @@ class SystemState extends ChangeNotifier {
 
     final prefs = await SharedPreferences.getInstance();
     await prefs.remove(_prefCurrentAuthUserKey);
+
+    await AuthService.instance.signOut();
 
     postSystemMessage('🔒 [SYSTEM] Disconnected session for $oldName.');
     notifyListeners();
@@ -967,6 +951,35 @@ class SystemState extends ChangeNotifier {
     final total = getDateTotalCount(date);
     if (total == 0) return 0.0;
     return (getDateCompletedCount(date) / total).clamp(0.0, 1.0);
+  }
+
+  /// Check if a specific quest/habit was completed on a given date
+  bool isQuestCompletedOnDate(String questId, DateTime date) {
+    final key = dateKey(date);
+    if (isDateToday(date)) {
+      final q = _quests.cast<Quest?>().firstWhere((element) => element?.id == questId, orElse: () => null);
+      if (q != null && q.isCompleted) return true;
+    }
+    final completedList = _dailyCompleted[key];
+    if (completedList != null && completedList.contains(questId)) {
+      return true;
+    }
+    final prog = _dailyProgress[key]?[questId];
+    if (prog != null) {
+      final q = _quests.cast<Quest?>().firstWhere((element) => element?.id == questId, orElse: () => null);
+      if (q != null && prog >= q.target) return true;
+    }
+    return false;
+  }
+
+  /// Get recorded progress for a specific quest/habit on a given date
+  int getQuestProgressOnDate(String questId, DateTime date) {
+    final key = dateKey(date);
+    if (isDateToday(date)) {
+      final q = _quests.cast<Quest?>().firstWhere((element) => element?.id == questId, orElse: () => null);
+      if (q != null) return q.current;
+    }
+    return _dailyProgress[key]?[questId] ?? 0;
   }
 
   // --- Quests & Habit Tracking ---

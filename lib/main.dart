@@ -5,11 +5,13 @@ import 'screens/progress_screen.dart';
 import 'screens/quest_screen.dart';
 import 'screens/status_screen.dart';
 import 'services/system_state.dart';
+import 'services/auth_service.dart';
 import 'theme/system_theme.dart';
 import 'widgets/emergency_quest_dialog.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await AuthService.instance.initialize();
   runApp(const SoloLevelingHabitApp());
 }
 
@@ -19,7 +21,7 @@ class SoloLevelingHabitApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Monarch Protocol • The System',
+      title: 'Habit Flow • The System',
       debugShowCheckedModeBanner: false,
       theme: SystemTheme.darkTheme,
       home: const MainSystemScreen(),
@@ -249,7 +251,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
           ),
           const SizedBox(width: 10),
           Text(
-            'MONARCH PROTOCOL',
+            'HABIT FLOW',
             style: GoogleFonts.orbitron(
               color: Colors.white,
               fontSize: 14,

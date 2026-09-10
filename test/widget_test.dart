@@ -1,8 +1,10 @@
+import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:monarch_protocol/main.dart';
-import 'package:monarch_protocol/models/quest_model.dart';
-import 'package:monarch_protocol/services/system_state.dart';
+import 'package:habit_flow/main.dart';
+import 'package:habit_flow/models/quest_model.dart';
+import 'package:habit_flow/services/system_state.dart';
+import 'package:habit_flow/widgets/habit_day_tracker_grid.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -128,9 +130,8 @@ void main() {
 
     // Verify Main screen is rendered
     expect(find.text('THE SYSTEM'), findsOneWidget);
-    expect(find.text('DAILY PROTOCOL: SHADOW AWAKENING'), findsOneWidget);
-    expect(find.text('Push-ups'), findsOneWidget);
-    expect(find.text('NEW TASK'), findsOneWidget);
+    expect(find.text('HABIT FLOW'), findsOneWidget);
+    expect(find.text('NEW TASK', skipOffstage: false), findsWidgets);
   });
 
   test('Emergency quest generation sets deadline to 23:59 and triggers modal state', () async {
@@ -244,6 +245,44 @@ void main() {
     final signInSuccess = await state.signInWithEmail('cha.hae.in@gmail.com', 'sword123');
     expect(signInSuccess, true);
     expect(state.currentUser!.displayName, 'Cha Hae-In');
+
+    state.dispose();
+  });
+
+  testWidgets('HabitDayTrackerGrid renders contribution heatmap cells and responds to taps', (tester) async {
+    late SystemState state;
+    await tester.runAsync(() async {
+      state = SystemState();
+      await Future.delayed(const Duration(milliseconds: 50));
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: SizedBox(
+            width: 360,
+            child: HabitDayTrackerGrid(
+              questId: 'daily_pushups',
+              state: state,
+            ),
+          ),
+        ),
+      ),
+    );
+    await tester.pump();
+
+    // Verify HabitDayTrackerGrid rendered
+    expect(find.byType(HabitDayTrackerGrid), findsOneWidget);
+    // Tooltips exist for cells
+    expect(find.byType(Tooltip), findsWidgets);
+
+    // Verify isQuestCompletedOnDate method
+    final today = DateTime.now();
+    final bool initialCompleted = state.isQuestCompletedOnDate('daily_pushups', today);
+
+    // Toggle today's quest
+    state.toggleQuestComplete('daily_pushups', date: today);
+    expect(state.isQuestCompletedOnDate('daily_pushups', today), !initialCompleted);
 
     state.dispose();
   });

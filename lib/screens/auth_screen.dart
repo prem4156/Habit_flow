@@ -117,207 +117,172 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     } catch (_) {}
 
     try {
-      // 1. Attempt native device Google account sign-in
       final success = await widget.state.signInWithGoogle(tryDeviceAuth: true);
       if (!mounted) return;
 
-      setState(() => _isLoading = false);
+      setState(() {
+        _isLoading = false;
+      });
 
-      // If user cancelled native dialog or device auth is not supported, open the picker modal
       if (!success && !widget.state.isAuthenticated) {
-        _showGoogleAccountPicker();
+        _promptGmailConnectDialog();
       }
     } catch (e) {
       if (!mounted) return;
-      setState(() => _isLoading = false);
-      _showGoogleAccountPicker();
+      setState(() {
+        _isLoading = false;
+      });
+      _promptGmailConnectDialog();
     }
   }
 
-  void _showGoogleAccountPicker() {
-
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: SystemColors.panelBg,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
-        side: BorderSide(color: SystemColors.cyanGlow, width: 1.2),
-      ),
-      builder: (ctx) {
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(6),
-                    decoration: const BoxDecoration(
-                      color: Colors.white,
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Text('G', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 16)),
-                  ),
-                  const SizedBox(width: 12),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Choose a Google Account',
-                        style: GoogleFonts.orbitron(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
-                      ),
-                      Text(
-                        'to continue to Monarch Protocol',
-                        style: GoogleFonts.rajdhani(color: SystemColors.textSecondary, fontSize: 12),
-                      ),
-                    ],
-                  ),
-                ],
-              ),
-              const SizedBox(height: 16),
-              const Divider(color: Colors.white12),
-
-              // Quick Google Profile 1
-              _buildGoogleAccountOption(
-                name: 'Sung Jin-Woo',
-                email: 'jinwoo.shadowmonarch@gmail.com',
-                avatarChar: 'S',
-                color: Colors.deepPurple,
-                onTap: () {
-                  Navigator.pop(ctx);
-                  widget.state.signInWithGoogle(
-                    email: 'jinwoo.shadowmonarch@gmail.com',
-                    displayName: 'Sung Jin-Woo',
-                  );
-                },
-              ),
-
-              // Quick Google Profile 2
-              _buildGoogleAccountOption(
-                name: 'Hunter Candidate',
-                email: 'hunter.solo@gmail.com',
-                avatarChar: 'H',
-                color: Colors.teal,
-                onTap: () {
-                  Navigator.pop(ctx);
-                  widget.state.signInWithGoogle(
-                    email: 'hunter.solo@gmail.com',
-                    displayName: 'Hunter Candidate',
-                  );
-                },
-              ),
-
-              // Custom Gmail Input
-              ListTile(
-                contentPadding: EdgeInsets.zero,
-                leading: const CircleAvatar(
-                  backgroundColor: Colors.white24,
-                  child: Icon(Icons.person_add_alt_1, color: SystemColors.cyanGlow, size: 20),
-                ),
-                title: Text(
-                  'Use another Gmail account',
-                  style: GoogleFonts.rajdhani(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                ),
-                subtitle: Text(
-                  'Enter your own Gmail address',
-                  style: GoogleFonts.rajdhani(color: Colors.white54, fontSize: 12),
-                ),
-                onTap: () {
-                  Navigator.pop(ctx);
-                  _showCustomGoogleInputDialog();
-                },
-              ),
-              const SizedBox(height: 12),
-            ],
-          ),
-        );
-      },
+  void _promptGmailConnectDialog() {
+    final TextEditingController gmailCtrl = TextEditingController(
+      text: _signInEmailCtrl.text.isNotEmpty ? _signInEmailCtrl.text : '',
     );
-  }
-
-  void _showCustomGoogleInputDialog() {
-    final emailCtrl = TextEditingController();
-    final nameCtrl = TextEditingController();
+    final TextEditingController nameCtrl = TextEditingController(
+      text: _signUpNameCtrl.text.isNotEmpty ? _signUpNameCtrl.text : '',
+    );
+    String? dialogError;
 
     showDialog(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: SystemColors.panelBg,
-        shape: RoundedRectangleBorder(
-          side: const BorderSide(color: SystemColors.cyanGlow, width: 1.5),
-          borderRadius: BorderRadius.circular(8),
-        ),
-        title: Text(
-          'GOOGLE ACCOUNT LOGIN',
-          style: GoogleFonts.orbitron(color: SystemColors.cyanGlow, fontSize: 14, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: nameCtrl,
-              style: GoogleFonts.rajdhani(color: Colors.white),
-              decoration: const InputDecoration(labelText: 'Google Display Name', hintText: 'e.g. Jin-Woo'),
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setDialogState) => AlertDialog(
+          backgroundColor: SystemColors.panelBg,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+            side: const BorderSide(color: SystemColors.cyanGlow, width: 1.5),
+          ),
+          title: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: const BoxDecoration(
+                  color: Colors.white,
+                  shape: BoxShape.circle,
+                ),
+                child: const Text(
+                  'G',
+                  style: TextStyle(
+                    color: Colors.blueAccent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  'CONNECT GMAIL ACCOUNT',
+                  style: GoogleFonts.orbitron(
+                    color: Colors.white,
+                    fontSize: 13,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Enter your Google / Gmail account to synchronize directly with the System:',
+                  style: GoogleFonts.rajdhani(
+                    color: SystemColors.textSecondary,
+                    fontSize: 13,
+                  ),
+                ),
+                const SizedBox(height: 14),
+                TextField(
+                  controller: gmailCtrl,
+                  keyboardType: TextInputType.emailAddress,
+                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15),
+                  decoration: const InputDecoration(
+                    labelText: 'Gmail Address',
+                    hintText: 'hunter@gmail.com',
+                    prefixIcon: Icon(Icons.email_outlined, color: SystemColors.cyanGlow, size: 18),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: nameCtrl,
+                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15),
+                  decoration: const InputDecoration(
+                    labelText: 'Hunter Name (Optional)',
+                    hintText: 'Sung Jin-Woo',
+                    prefixIcon: Icon(Icons.badge_outlined, color: SystemColors.cyanGlow, size: 18),
+                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  ),
+                ),
+                if (dialogError != null) ...[
+                  const SizedBox(height: 10),
+                  Text(
+                    dialogError!,
+                    style: GoogleFonts.rajdhani(
+                      color: SystemColors.crimsonGlow,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ],
             ),
-            const SizedBox(height: 10),
-            TextField(
-              controller: emailCtrl,
-              keyboardType: TextInputType.emailAddress,
-              style: GoogleFonts.rajdhani(color: Colors.white),
-              decoration: const InputDecoration(labelText: 'Gmail Address', hintText: 'e.g. hunter@gmail.com'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.of(dialogCtx).pop(),
+              child: Text(
+                'CANCEL',
+                style: GoogleFonts.orbitron(color: Colors.white60, fontSize: 11),
+              ),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: SystemColors.cyanGlow,
+                foregroundColor: Colors.black,
+              ),
+              onPressed: () async {
+                final emailText = gmailCtrl.text.trim();
+                if (emailText.isEmpty || !emailText.contains('@')) {
+                  setDialogState(() {
+                    dialogError = 'Please enter a valid Gmail address.';
+                  });
+                  return;
+                }
+                Navigator.of(dialogCtx).pop();
+
+                setState(() {
+                  _isLoading = true;
+                  _errorMessage = null;
+                });
+
+                final success = await widget.state.signInWithGoogle(
+                  email: emailText,
+                  displayName: nameCtrl.text.trim().isNotEmpty ? nameCtrl.text.trim() : null,
+                  tryDeviceAuth: false,
+                );
+
+                if (!mounted) return;
+                setState(() {
+                  _isLoading = false;
+                  if (!success && !widget.state.isAuthenticated) {
+                    _errorMessage = 'Failed to connect Gmail account.';
+                  }
+                });
+              },
+              child: Text(
+                'SYNC GMAIL',
+                style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text('CANCEL', style: GoogleFonts.orbitron(color: Colors.white60)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: SystemColors.cyanGlow, foregroundColor: Colors.black),
-            onPressed: () {
-              final em = emailCtrl.text.trim();
-              final nm = nameCtrl.text.trim();
-              if (em.isNotEmpty) {
-                Navigator.pop(ctx);
-                widget.state.signInWithGoogle(
-                  email: em,
-                  displayName: nm.isEmpty ? 'Google Hunter' : nm,
-                );
-              }
-            },
-            child: Text('VERIFY & LOGIN', style: GoogleFonts.orbitron(fontWeight: FontWeight.bold)),
-          ),
-        ],
       ),
-    );
-  }
-
-  Widget _buildGoogleAccountOption({
-    required String name,
-    required String email,
-    required String avatarChar,
-    required Color color,
-    required VoidCallback onTap,
-  }) {
-    return ListTile(
-      contentPadding: EdgeInsets.zero,
-      leading: CircleAvatar(
-        backgroundColor: color,
-        child: Text(avatarChar, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-      ),
-      title: Text(
-        name,
-        style: GoogleFonts.orbitron(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-      ),
-      subtitle: Text(
-        email,
-        style: GoogleFonts.rajdhani(color: SystemColors.textSecondary, fontSize: 12),
-      ),
-      trailing: const Icon(Icons.arrow_forward_ios, color: Colors.white24, size: 14),
-      onTap: onTap,
     );
   }
 
@@ -640,7 +605,23 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       ),
                     ),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 6),
+                  Center(
+                    child: TextButton.icon(
+                      onPressed: _isLoading ? null : _promptGmailConnectDialog,
+                      icon: const Icon(Icons.alternate_email, color: SystemColors.cyanGlow, size: 14),
+                      label: Text(
+                        'ENTER GMAIL DIRECTLY',
+                        style: GoogleFonts.orbitron(
+                          color: SystemColors.cyanGlow,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: 0.8,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
 
                   // Guest Awakening Button
                   OutlinedButton.icon(
