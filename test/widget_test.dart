@@ -286,4 +286,40 @@ void main() {
 
     state.dispose();
   });
+
+  test('365/366 Day Year Matrix: tasks record and persist dayOfYear completion sets in real time', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    final now = DateTime.now();
+    final todayDoy = SystemState.getDayOfYear(now);
+    final totalDays = SystemState.getTotalDaysInYear(now.year);
+
+    expect(todayDoy, greaterThanOrEqualTo(1));
+    expect(todayDoy, lessThanOrEqualTo(totalDays));
+    expect(totalDays == 365 || totalDays == 366, true);
+
+    // Verify initial task year completions for today
+    final initialSet = state.getCompletedDaysForTask('daily_pushups', year: now.year);
+    expect(initialSet.contains(todayDoy), false);
+
+    // Complete task for today
+    state.setQuestProgress('daily_pushups', 100, date: now);
+    final updatedSet = state.getCompletedDaysForTask('daily_pushups', year: now.year);
+    expect(updatedSet.contains(todayDoy), true);
+    expect(state.isTaskCompletedOnDayOfYear('daily_pushups', todayDoy, year: now.year), true);
+
+    // Verify different task has its own distinct completion set
+    final situpsSet = state.getCompletedDaysForTask('daily_situps', year: now.year);
+    expect(situpsSet.contains(todayDoy), false);
+
+    // Complete past date (e.g. Day 10 of current year)
+    final pastDate = DateTime(now.year, 1, 10);
+    state.setQuestProgress('daily_pushups', 100, date: pastDate);
+    final updatedSetPast = state.getCompletedDaysForTask('daily_pushups', year: now.year);
+    expect(updatedSetPast.contains(10), true);
+    expect(state.isTaskCompletedOnDayOfYear('daily_pushups', 10, year: now.year), true);
+
+    state.dispose();
+  });
 }

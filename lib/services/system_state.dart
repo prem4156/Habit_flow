@@ -25,6 +25,7 @@ class SystemState extends ChangeNotifier {
   static const String _prefTotalClearsKey = 'sl_total_clears';
   static const String _prefLastPerfectDayKey = 'sl_last_perfect_day';
   static const String _prefBestStreakKey = 'sl_best_streak';
+  static const String _prefTaskYearCompletionsKey = 'sl_task_year_completions';
 
   // --- Real-time Auth State ---
   AuthUser? _currentUser;
@@ -42,6 +43,9 @@ class SystemState extends ChangeNotifier {
   Map<String, Map<String, int>> _dailyProgress = {};
   // key: dateKey (YYYY-MM-DD) -> [ questIds completed ]
   Map<String, List<String>> _dailyCompleted = {};
+  // Yearly completion records:
+  // key: "${questId}_${year}" -> Set<int> of day-of-year values (1-365/366)
+  Map<String, Set<int>> _taskYearCompletions = {};
   // Map of stat code (STR, AGI, etc.) -> total gains earned directly through quest completions
   Map<String, int> _statGainsFromQuests = {
     'STR': 0,
@@ -165,6 +169,36 @@ class SystemState extends ChangeNotifier {
   static String dateKey(DateTime d) =>
       '${d.year.toString().padLeft(4, '0')}-${d.month.toString().padLeft(2, '0')}-${d.day.toString().padLeft(2, '0')}';
 
+  /// Calculate 1-based Day of Year (1 - 365 / 366)
+  static int getDayOfYear(DateTime date) {
+    return date.difference(DateTime(date.year, 1, 1)).inDays + 1;
+  }
+
+  /// Get total days in a given year (366 for leap years, 365 otherwise)
+  static int getTotalDaysInYear(int year) {
+    final isLeap = (year % 4 == 0 && year % 100 != 0) || (year % 400 == 0);
+    return isLeap ? 366 : 365;
+  }
+
+  /// Retrieve the set of completed day-of-year numbers for a given task and year
+  Set<int> getCompletedDaysForTask(String questId, {int? year}) {
+    final targetYear = year ?? _selectedDate.year;
+    final key = '${questId}_$targetYear';
+    final set = _taskYearCompletions[key] ?? <int>{};
+    return Set<int>.from(set);
+  }
+
+  /// Check whether a task was completed on a specific day of the year (1 - 365/366)
+  bool isTaskCompletedOnDayOfYear(String questId, int dayOfYear, {int? year}) {
+    final targetYear = year ?? _selectedDate.year;
+    final key = '${questId}_$targetYear';
+    if (_taskYearCompletions[key]?.contains(dayOfYear) ?? false) {
+      return true;
+    }
+    final d = DateTime(targetYear, 1, 1).add(Duration(days: dayOfYear - 1));
+    return isQuestCompletedOnDate(questId, d);
+  }
+
   String get todayKey => dateKey(DateTime.now());
   String get selectedDateKey => dateKey(_selectedDate);
 
@@ -281,6 +315,37 @@ class SystemState extends ChangeNotifier {
       _dailyCompleted = {};
     }
 
+    final taskYearStr = prefs.getString(_userPref(_prefTaskYearCompletionsKey));
+    if (taskYearStr != null) {
+      try {
+        final Map decoded = jsonDecode(taskYearStr);
+        _taskYearCompletions = decoded.map(
+          (k, v) => MapEntry(k.toString(), (v as List).map((e) => (e as num).toInt()).toSet()),
+        );
+      } catch (_) {
+        _taskYearCompletions = {};
+      }
+    } else {
+      _taskYearCompletions = {};
+    }
+
+    // Populate task year completions from _dailyCompleted for consistency
+    for (final entry in _dailyCompleted.entries) {
+      try {
+        final parts = entry.key.split('-');
+        if (parts.length == 3) {
+          final y = int.parse(parts[0]);
+          final m = int.parse(parts[1]);
+          final d = int.parse(parts[2]);
+          final date = DateTime(y, m, d);
+          final doy = getDayOfYear(date);
+          for (final qId in entry.value) {
+            _taskYearCompletions.putIfAbsent('${qId}_$y', () => <int>{}).add(doy);
+          }
+        }
+      } catch (_) {}
+    }
+
     final statGainsStr = prefs.getString(_userPref(_prefStatGainsKey));
     if (statGainsStr != null) {
       final Map decoded = jsonDecode(statGainsStr);
@@ -343,6 +408,12 @@ class SystemState extends ChangeNotifier {
 
       await prefs.setString(_userPref(_prefDailyProgressKey), jsonEncode(_dailyProgress));
       await prefs.setString(_userPref(_prefDailyCompletedKey), jsonEncode(_dailyCompleted));
+
+      final encodedTaskYear = _taskYearCompletions.map(
+        (k, v) => MapEntry(k, v.toList()),
+      );
+      await prefs.setString(_userPref(_prefTaskYearCompletionsKey), jsonEncode(encodedTaskYear));
+
       await prefs.setString(_userPref(_prefStatGainsKey), jsonEncode(_statGainsFromQuests));
       await prefs.setString(_userPref(_prefAchievementsKey), jsonEncode(_achievements.map((a) => a.toJson()).toList()));
       if (_activeEmergencyQuest != null) {
@@ -1048,6 +1119,11 @@ class SystemState extends ChangeNotifier {
       }
       _dailyCompleted[dKey]?.remove(questId);
       _dailyProgress[dKey]?[questId] = 0;
+
+      final doy = getDayOfYear(targetDate);
+      final yearKey = '${questId}_${targetDate.year}';
+      _taskYearCompletions[yearKey]?.remove(doy);
+
       postSystemMessage('[SYSTEM] Reopened [${template.title}] for ${targetDate.month}/${targetDate.day}.');
       saveState();
       notifyListeners();
@@ -1095,6 +1171,10 @@ class SystemState extends ChangeNotifier {
       completedList.add(quest.id);
     }
     _dailyProgress.putIfAbsent(dKey, () => {})[quest.id] = quest.target;
+
+    final doy = getDayOfYear(targetDate);
+    final yearKey = '${quest.id}_${targetDate.year}';
+    _taskYearCompletions.putIfAbsent(yearKey, () => <int>{}).add(doy);
 
     // DIRECT ATTRIBUTE IMPROVEMENT:
     // Attributes strictly improve based on the tasks completed!
@@ -1205,6 +1285,7 @@ class SystemState extends ChangeNotifier {
     for (var list in _dailyCompleted.values) {
       list.remove(id);
     }
+    _taskYearCompletions.removeWhere((k, v) => k.startsWith('${id}_'));
     saveState();
     notifyListeners();
   }

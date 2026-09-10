@@ -370,7 +370,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                     HabitDayTrackerGrid(
                       questId: quest.id,
                       state: widget.state,
-                      activeColor: SystemColors.goldAccent,
+                      activeColor: SystemColors.hpGreen,
                     ),
 
                     const SizedBox(height: 8),
