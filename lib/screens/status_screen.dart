@@ -268,7 +268,7 @@ class StatusScreen extends StatelessWidget {
                         const Icon(Icons.check_circle, color: SystemColors.cyanGlow, size: 16),
                         const SizedBox(width: 4),
                         Text(
-                          '${state.totalQuestClears} Quests Cleared',
+                          '${state.totalQuestClears} Tasks Cleared',
                           style: GoogleFonts.orbitron(
                             color: SystemColors.cyanGlow,
                             fontSize: 13,
@@ -431,7 +431,7 @@ class StatusScreen extends StatelessWidget {
                           ),
                         ),
                         Text(
-                          'Total Quests Cleared: ${state.totalQuestClears}',
+                          'Total Tasks Cleared: ${state.totalQuestClears}',
                           style: GoogleFonts.rajdhani(
                             color: SystemColors.textSecondary,
                             fontSize: 13,
@@ -454,6 +454,108 @@ class StatusScreen extends StatelessWidget {
                         backgroundColor: SystemColors.crimsonGlow,
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          // System Theme Calibration (Dark / Light)
+          SystemWindow(
+            title: 'System Interface Calibration',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => state.setThemeMode(ThemeMode.dark),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: state.isDarkMode
+                                ? SystemColors.monarchDark.withValues(alpha: 0.8)
+                                : (SystemTheme.isDark(context) ? Colors.black26 : const Color(0xFFE2E8F0)),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: state.isDarkMode ? SystemColors.cyanGlow : Colors.transparent,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.dark_mode,
+                                color: state.isDarkMode ? SystemColors.cyanGlow : SystemTheme.getTextMuted(context),
+                                size: 24,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'SHADOW MONARCH',
+                                style: GoogleFonts.orbitron(
+                                  color: state.isDarkMode ? SystemColors.cyanGlow : SystemTheme.getTextPrimary(context),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Dark Holographic HUD',
+                                style: GoogleFonts.rajdhani(
+                                  color: SystemTheme.getTextSecondary(context),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => state.setThemeMode(ThemeMode.light),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          decoration: BoxDecoration(
+                            color: !state.isDarkMode
+                                ? SystemColors.lightCyanGlow.withValues(alpha: 0.15)
+                                : (SystemTheme.isDark(context) ? Colors.black26 : const Color(0xFFE2E8F0)),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: !state.isDarkMode ? SystemColors.lightCyanGlow : Colors.transparent,
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.light_mode,
+                                color: !state.isDarkMode ? SystemColors.goldAccent : SystemTheme.getTextMuted(context),
+                                size: 24,
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                'RADIANT SYSTEM',
+                                style: GoogleFonts.orbitron(
+                                  color: !state.isDarkMode ? SystemColors.lightCyanGlow : SystemTheme.getTextPrimary(context),
+                                  fontSize: 10.5,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Light Crystal HUD',
+                                style: GoogleFonts.rajdhani(
+                                  color: SystemTheme.getTextSecondary(context),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
                       ),
                     ),
                   ],

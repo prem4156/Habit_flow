@@ -4,7 +4,6 @@ import '../models/quest_model.dart';
 import '../services/system_state.dart';
 import '../theme/system_theme.dart';
 import '../widgets/calendar_hud_bar.dart';
-import '../widgets/system_window.dart';
 import '../widgets/deadly_quest_card.dart';
 
 class QuestScreen extends StatefulWidget {
@@ -17,7 +16,7 @@ class QuestScreen extends StatefulWidget {
 }
 
 class _QuestScreenState extends State<QuestScreen> {
-  bool _showCompletedQuests = false;
+  bool _showCompletedTasks = false;
 
   void _showAddQuestDialog(BuildContext context) {
     final titleCtrl = TextEditingController();
@@ -300,27 +299,9 @@ class _QuestScreenState extends State<QuestScreen> {
   Widget build(BuildContext context) {
     final state = widget.state;
     final selectedDate = state.selectedDate;
-    final isToday = state.isDateToday(selectedDate);
-    final isPast = state.isDatePast(selectedDate);
-    final isFuture = state.isDateFuture(selectedDate);
-
     final questsForDay = state.getQuestsForDate(selectedDate);
     final activeQuests = questsForDay.where((q) => !q.isCompleted).toList();
     final completedQuests = questsForDay.where((q) => q.isCompleted).toList();
-    final totalCount = questsForDay.length;
-    final completedCount = completedQuests.length;
-    final ratio = totalCount > 0 ? (completedCount / totalCount).clamp(0.0, 1.0) : 0.0;
-
-    String bannerTitle = 'DAILY PROTOCOL: SHADOW AWAKENING';
-    String bannerSubtitle =
-        'GOAL: Complete all physical training and daily rituals to expand the Shadow Monarch realm.';
-    if (isPast) {
-      bannerTitle = 'HISTORICAL LOG: ${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
-      bannerSubtitle = 'ARCHIVED PROTOCOL: Inspecting past daily task completions and performance.';
-    } else if (isFuture) {
-      bannerTitle = 'SCHEDULED PROTOCOL: ${selectedDate.year}-${selectedDate.month.toString().padLeft(2, '0')}-${selectedDate.day.toString().padLeft(2, '0')}';
-      bannerSubtitle = 'UPCOMING PROTOCOL: Daily recurring habits scheduled linearly for this date.';
-    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -330,114 +311,7 @@ class _QuestScreenState extends State<QuestScreen> {
           // Google Calendar-like Date Navigation HUD Strip
           CalendarHudBar(state: state),
 
-          // Daily Quest Banner with Solo Leveling HUD aesthetic
-          SystemWindow(
-            title: bannerTitle,
-            trailing: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
-              decoration: BoxDecoration(
-                color: ratio == 1.0
-                    ? SystemColors.hpGreen.withValues(alpha: 0.15)
-                    : SystemColors.cyanGlow.withValues(alpha: 0.15),
-                borderRadius: BorderRadius.circular(4),
-                border: Border.all(
-                  color: ratio == 1.0 ? SystemColors.hpGreen : SystemColors.cyanGlow,
-                  width: 0.8,
-                ),
-              ),
-              child: Text(
-                '$completedCount/$totalCount CLEARED',
-                style: GoogleFonts.orbitron(
-                  color: ratio == 1.0 ? SystemColors.hpGreen : SystemColors.cyanGlow,
-                  fontSize: 11,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  bannerSubtitle,
-                  style: GoogleFonts.rajdhani(
-                    color: SystemColors.textPrimary,
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                  ),
-                ),
-                const SizedBox(height: 12),
-                ClipRRect(
-                  borderRadius: BorderRadius.circular(4),
-                  child: LinearProgressIndicator(
-                    value: ratio,
-                    minHeight: 8,
-                    backgroundColor: Colors.black45,
-                    valueColor: AlwaysStoppedAnimation<Color>(
-                      ratio == 1.0 ? SystemColors.hpGreen : SystemColors.cyanGlow,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 14),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    if (isToday)
-                      OutlinedButton.icon(
-                        onPressed: () => state.resetDailyQuests(selectedDate),
-                        icon: const Icon(Icons.refresh, size: 14, color: SystemColors.textSecondary),
-                        label: Text(
-                          'RESET DAILIES',
-                          style: GoogleFonts.orbitron(fontSize: 10, color: SystemColors.textSecondary),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: SystemColors.textSecondary.withValues(alpha: 0.4)),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        ),
-                      )
-                    else
-                      OutlinedButton.icon(
-                        onPressed: () => state.selectDate(DateTime.now()),
-                        icon: const Icon(Icons.today, size: 14, color: SystemColors.cyanGlow),
-                        label: Text(
-                          'TODAY',
-                          style: GoogleFonts.orbitron(fontSize: 10, color: SystemColors.cyanGlow),
-                        ),
-                        style: OutlinedButton.styleFrom(
-                          side: BorderSide(color: SystemColors.cyanGlow.withValues(alpha: 0.4)),
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        ),
-                      ),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                      decoration: BoxDecoration(
-                        color: SystemColors.monarchViolet.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: SystemColors.monarchViolet.withValues(alpha: 0.6), width: 1),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Icons.flash_on, size: 13, color: SystemColors.monarchViolet),
-                          const SizedBox(width: 4),
-                          Text(
-                            'DEADLY DISCIPLINE',
-                            style: GoogleFonts.orbitron(
-                              fontSize: 9,
-                              color: SystemColors.monarchViolet,
-                              fontWeight: FontWeight.bold,
-                              letterSpacing: 0.8,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-
-          const SizedBox(height: 10),
+          const SizedBox(height: 4),
 
           // Emergency Quest Directive (if active)
           if (state.activeEmergencyQuest != null && !state.activeEmergencyQuest!.isCompleted)
@@ -547,7 +421,7 @@ class _QuestScreenState extends State<QuestScreen> {
                 InkWell(
                   onTap: () {
                     setState(() {
-                      _showCompletedQuests = !_showCompletedQuests;
+                      _showCompletedTasks = !_showCompletedTasks;
                     });
                   },
                   borderRadius: BorderRadius.circular(6),
@@ -556,7 +430,7 @@ class _QuestScreenState extends State<QuestScreen> {
                     child: Row(
                       children: [
                         Icon(
-                          _showCompletedQuests
+                          _showCompletedTasks
                               ? Icons.keyboard_arrow_down
                               : Icons.keyboard_arrow_right,
                           color: SystemColors.textSecondary,
@@ -583,7 +457,7 @@ class _QuestScreenState extends State<QuestScreen> {
                     ),
                   ),
                 ),
-                if (_showCompletedQuests)
+                if (_showCompletedTasks)
                   ...completedQuests.map(
                     (quest) => DeadlyQuestCard(
                       key: ValueKey('done_${quest.id}_${selectedDate.millisecondsSinceEpoch}'),

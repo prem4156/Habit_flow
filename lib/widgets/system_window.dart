@@ -26,25 +26,35 @@ class SystemWindow extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isDark = SystemTheme.isDark(context);
+    final effectiveBorderColor = borderColor == SystemColors.cyanGlow
+        ? (isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow)
+        : borderColor;
+    final effectiveTitleColor = titleColor == SystemColors.cyanGlow
+        ? (isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow)
+        : titleColor;
+
     return Container(
       margin: margin,
       decoration: BoxDecoration(
-        color: SystemColors.panelBg.withValues(alpha: 0.85),
+        color: isDark
+            ? SystemColors.panelBg.withValues(alpha: 0.85)
+            : SystemColors.lightPanelBg.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(8.0),
         border: Border.all(
-          color: borderColor.withValues(alpha: 0.5),
+          color: effectiveBorderColor.withValues(alpha: isDark ? 0.5 : 0.6),
           width: 1.5,
         ),
         boxShadow: [
           BoxShadow(
-            color: borderColor.withValues(alpha: 0.18),
+            color: effectiveBorderColor.withValues(alpha: isDark ? 0.18 : 0.12),
             blurRadius: 16,
             spreadRadius: 1,
           ),
-          const BoxShadow(
-            color: Colors.black87,
+          BoxShadow(
+            color: isDark ? Colors.black87 : Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
-            spreadRadius: 2,
+            spreadRadius: isDark ? 2 : 1,
           ),
         ],
       ),
@@ -55,26 +65,26 @@ class SystemWindow extends StatelessWidget {
             Positioned(
               top: 2,
               left: 2,
-              child: _CornerBracket(color: borderColor, isTop: true, isLeft: true),
+              child: _CornerBracket(color: effectiveBorderColor, isTop: true, isLeft: true),
             ),
             Positioned(
               top: 2,
               right: 2,
-              child: _CornerBracket(color: borderColor, isTop: true, isLeft: false),
+              child: _CornerBracket(color: effectiveBorderColor, isTop: true, isLeft: false),
             ),
             Positioned(
               bottom: 2,
               left: 2,
-              child: _CornerBracket(color: borderColor, isTop: false, isLeft: true),
+              child: _CornerBracket(color: effectiveBorderColor, isTop: false, isLeft: true),
             ),
             Positioned(
               bottom: 2,
               right: 2,
-              child: _CornerBracket(color: borderColor, isTop: false, isLeft: false),
+              child: _CornerBracket(color: effectiveBorderColor, isTop: false, isLeft: false),
             ),
           ],
 
-          // Content
+          // Window Content
           Padding(
             padding: padding,
             child: Column(
@@ -93,10 +103,10 @@ class SystemWindow extends StatelessWidget {
                             height: 16,
                             margin: const EdgeInsets.only(right: 8),
                             decoration: BoxDecoration(
-                              color: titleColor,
+                              color: effectiveTitleColor,
                               boxShadow: [
                                 BoxShadow(
-                                  color: titleColor.withValues(alpha: 0.8),
+                                  color: effectiveTitleColor.withValues(alpha: 0.8),
                                   blurRadius: 6,
                                 ),
                               ],
@@ -106,7 +116,7 @@ class SystemWindow extends StatelessWidget {
                             child: Text(
                               title.toUpperCase(),
                               style: GoogleFonts.orbitron(
-                                color: titleColor,
+                                color: effectiveTitleColor,
                                 fontSize: 13,
                                 fontWeight: FontWeight.w700,
                                 letterSpacing: 1.5,
@@ -127,8 +137,8 @@ class SystemWindow extends StatelessWidget {
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        borderColor.withValues(alpha: 0.6),
-                        borderColor.withValues(alpha: 0.1),
+                        effectiveBorderColor.withValues(alpha: 0.6),
+                        effectiveBorderColor.withValues(alpha: 0.1),
                         Colors.transparent,
                       ],
                     ),
@@ -159,18 +169,22 @@ class _CornerBracket extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return CustomPaint(
-      size: const Size(12, 12),
-      painter: _CornerPainter(color: color, isTop: isTop, isLeft: isLeft),
+      size: const Size(10, 10),
+      painter: _CornerBracketPainter(
+        color: color,
+        isTop: isTop,
+        isLeft: isLeft,
+      ),
     );
   }
 }
 
-class _CornerPainter extends CustomPainter {
+class _CornerBracketPainter extends CustomPainter {
   final Color color;
   final bool isTop;
   final bool isLeft;
 
-  _CornerPainter({
+  _CornerBracketPainter({
     required this.color,
     required this.isTop,
     required this.isLeft,
@@ -180,7 +194,7 @@ class _CornerPainter extends CustomPainter {
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
       ..color = color
-      ..strokeWidth = 2.0
+      ..strokeWidth = 1.5
       ..style = PaintingStyle.stroke;
 
     final path = Path();
@@ -189,21 +203,26 @@ class _CornerPainter extends CustomPainter {
       path.lineTo(0, 0);
       path.lineTo(size.width, 0);
     } else if (isTop && !isLeft) {
-      path.moveTo(size.width, size.height);
+      path.moveTo(0, 0);
       path.lineTo(size.width, 0);
-      path.lineTo(0, 0);
+      path.lineTo(size.width, size.height);
     } else if (!isTop && isLeft) {
       path.moveTo(0, 0);
       path.lineTo(0, size.height);
       path.lineTo(size.width, size.height);
     } else {
-      path.moveTo(size.width, 0);
+      path.moveTo(0, size.height);
       path.lineTo(size.width, size.height);
-      path.lineTo(0, size.height);
+      path.lineTo(size.width, 0);
     }
+
     canvas.drawPath(path, paint);
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _CornerBracketPainter oldDelegate) {
+    return oldDelegate.color != color ||
+        oldDelegate.isTop != isTop ||
+        oldDelegate.isLeft != isLeft;
+  }
 }

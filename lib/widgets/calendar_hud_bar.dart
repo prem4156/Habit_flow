@@ -77,17 +77,7 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
       lastDate: now.add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: SystemColors.cyanGlow,
-              onPrimary: Colors.black,
-              surface: SystemColors.panelBg,
-              onSurface: Colors.white,
-            ),
-            dialogTheme: const DialogThemeData(
-              backgroundColor: SystemColors.panelBg,
-            ),
-          ),
+          data: Theme.of(context),
           child: child!,
         );
       },
@@ -110,19 +100,22 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
       return today.add(Duration(days: i - _daysBefore));
     });
 
+    final isDark = SystemTheme.isDark(context);
+    final accentColor = isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14.0),
       padding: const EdgeInsets.symmetric(vertical: 10.0),
       decoration: BoxDecoration(
-        color: SystemColors.panelBg.withValues(alpha: 0.95),
+        color: isDark ? SystemColors.panelBg.withValues(alpha: 0.95) : SystemColors.lightPanelBg.withValues(alpha: 0.95),
         borderRadius: BorderRadius.circular(10.0),
         border: Border.all(
-          color: SystemColors.cyanGlow.withValues(alpha: 0.4),
+          color: isDark ? SystemColors.cyanGlow.withValues(alpha: 0.4) : SystemColors.lightPanelBorder,
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: SystemColors.cyanGlow.withValues(alpha: 0.12),
+            color: isDark ? SystemColors.cyanGlow.withValues(alpha: 0.12) : Colors.black.withValues(alpha: 0.04),
             blurRadius: 16,
             offset: const Offset(0, 4),
           ),
@@ -136,12 +129,12 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
             padding: const EdgeInsets.symmetric(horizontal: 14.0, vertical: 4.0),
             child: Row(
               children: [
-                Icon(Icons.calendar_month, color: SystemColors.cyanGlow, size: 18),
+                Icon(Icons.calendar_month, color: accentColor, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   '${_getMonthName(selectedDate.month)} ${selectedDate.year}',
                   style: GoogleFonts.orbitron(
-                    color: SystemColors.cyanGlow,
+                    color: accentColor,
                     fontSize: 13,
                     fontWeight: FontWeight.w800,
                     letterSpacing: 1.5,
@@ -159,14 +152,14 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                       margin: const EdgeInsets.only(right: 8),
                       decoration: BoxDecoration(
-                        color: SystemColors.cyanGlow.withValues(alpha: 0.15),
+                        color: accentColor.withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(4),
-                        border: Border.all(color: SystemColors.cyanGlow, width: 1),
+                        border: Border.all(color: accentColor, width: 1),
                       ),
                       child: Text(
                         'TODAY',
                         style: GoogleFonts.orbitron(
-                          color: SystemColors.cyanGlow,
+                          color: accentColor,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
@@ -175,7 +168,7 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                   ),
                 // Date picker modal button
                 IconButton(
-                  icon: const Icon(Icons.date_range, color: Colors.white70, size: 18),
+                  icon: Icon(Icons.date_range, color: isDark ? Colors.white70 : const Color(0xFF64748B), size: 18),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: 'Pick Date',
@@ -184,7 +177,7 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                 const SizedBox(width: 8),
                 // Previous Day Button
                 IconButton(
-                  icon: const Icon(Icons.chevron_left, color: SystemColors.cyanGlow, size: 22),
+                  icon: Icon(Icons.chevron_left, color: accentColor, size: 22),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: 'Previous Day',
@@ -196,7 +189,7 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                 const SizedBox(width: 4),
                 // Next Day Button
                 IconButton(
-                  icon: const Icon(Icons.chevron_right, color: SystemColors.cyanGlow, size: 22),
+                  icon: Icon(Icons.chevron_right, color: accentColor, size: 22),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   tooltip: 'Next Day',
@@ -240,21 +233,21 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? SystemColors.cyanGlow.withValues(alpha: 0.22)
-                          : Colors.black.withValues(alpha: 0.4),
+                          ? accentColor.withValues(alpha: isDark ? 0.22 : 0.15)
+                          : (isDark ? Colors.black.withValues(alpha: 0.4) : const Color(0xFFF8FAFC)),
                       borderRadius: BorderRadius.circular(8.0),
                       border: Border.all(
                         color: isSelected
-                            ? SystemColors.cyanGlow
+                            ? accentColor
                             : (isDateToday
-                                ? SystemColors.cyanGlow.withValues(alpha: 0.5)
-                                : Colors.white12),
+                                ? accentColor.withValues(alpha: 0.6)
+                                : (isDark ? Colors.white12 : Colors.black12)),
                         width: isSelected ? 1.8 : 1.0,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: SystemColors.cyanGlow.withValues(alpha: 0.35),
+                                color: accentColor.withValues(alpha: isDark ? 0.35 : 0.2),
                                 blurRadius: 10,
                               ),
                             ]
@@ -268,8 +261,8 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                           _getWeekdayName(date.weekday),
                           style: GoogleFonts.rajdhani(
                             color: isSelected
-                                ? SystemColors.cyanGlow
-                                : (isDateToday ? Colors.white : Colors.white54),
+                                ? accentColor
+                                : (isDateToday ? (isDark ? Colors.white : accentColor) : (isDark ? Colors.white54 : const Color(0xFF64748B))),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -281,8 +274,8 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                           '${date.day}',
                           style: GoogleFonts.orbitron(
                             color: isSelected
-                                ? Colors.white
-                                : (isDateToday ? SystemColors.cyanGlow : Colors.white70),
+                                ? (isDark ? Colors.white : accentColor)
+                                : (isDateToday ? accentColor : (isDark ? Colors.white70 : const Color(0xFF0F172A))),
                             fontSize: 16,
                             fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
                           ),

@@ -2,11 +2,24 @@ import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 
 class SystemColors {
+  // --- Dark Mode Base Colors (Shadow Monarch Theme) ---
   static const Color background = Color(0xFF050811);
   static const Color panelBg = Color(0xFF0C1427);
   static const Color panelBgTranslucent = Color(0xCC0C1427);
   static const Color panelBorder = Color(0xFF1E3A5F);
+
+  // --- Light Mode Base Colors (Radiant System Theme) ---
+  static const Color lightBackground = Color(0xFFF1F5F9);
+  static const Color lightPanelBg = Color(0xFFFFFFFF);
+  static const Color lightPanelBgTranslucent = Color(0xF2FFFFFF);
+  static const Color lightPanelBorder = Color(0xFFCBD5E1);
+  static const Color lightTextPrimary = Color(0xFF0F172A);
+  static const Color lightTextSecondary = Color(0xFF475569);
+  static const Color lightTextMuted = Color(0xFF94A3B8);
+  static const Color lightCyanGlow = Color(0xFF0284C7);
+  static const Color lightBlueGlow = Color(0xFF0369A1);
   
+  // --- Accent Glows ---
   static const Color cyanGlow = Color(0xFF00F0FF);
   static const Color blueGlow = Color(0xFF0084FF);
   static const Color darkBlue = Color(0xFF0E223D);
@@ -35,6 +48,36 @@ class SystemColors {
 }
 
 class SystemTheme {
+  /// Check if context is currently using Dark Theme
+  static bool isDark(BuildContext context) {
+    return Theme.of(context).brightness == Brightness.dark;
+  }
+
+  static Color getBackground(BuildContext context) =>
+      isDark(context) ? SystemColors.background : SystemColors.lightBackground;
+
+  static Color getPanelBg(BuildContext context) =>
+      isDark(context) ? SystemColors.panelBg : SystemColors.lightPanelBg;
+
+  static Color getPanelBgTranslucent(BuildContext context) =>
+      isDark(context) ? SystemColors.panelBgTranslucent : SystemColors.lightPanelBgTranslucent;
+
+  static Color getPanelBorder(BuildContext context) =>
+      isDark(context) ? SystemColors.panelBorder : SystemColors.lightPanelBorder;
+
+  static Color getTextPrimary(BuildContext context) =>
+      isDark(context) ? SystemColors.textPrimary : SystemColors.lightTextPrimary;
+
+  static Color getTextSecondary(BuildContext context) =>
+      isDark(context) ? SystemColors.textSecondary : SystemColors.lightTextSecondary;
+
+  static Color getTextMuted(BuildContext context) =>
+      isDark(context) ? SystemColors.textMuted : SystemColors.lightTextMuted;
+
+  static Color getPrimaryAccent(BuildContext context) =>
+      isDark(context) ? SystemColors.cyanGlow : SystemColors.lightCyanGlow;
+
+  /// Signature Shadow Monarch Dark Theme
   static ThemeData get darkTheme {
     return ThemeData.dark().copyWith(
       scaffoldBackgroundColor: SystemColors.background,
@@ -44,6 +87,14 @@ class SystemTheme {
         secondary: SystemColors.blueGlow,
         surface: SystemColors.panelBg,
         error: SystemColors.crimsonGlow,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: SystemColors.panelBg,
+        foregroundColor: Colors.white,
+        elevation: 0,
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: SystemColors.panelBg,
       ),
       textTheme: GoogleFonts.rajdhaniTextTheme(ThemeData.dark().textTheme).copyWith(
         displayLarge: GoogleFonts.orbitron(
@@ -75,26 +126,76 @@ class SystemTheme {
     );
   }
 
+  /// High-Tech Radiant Hunter System Light Theme
+  static ThemeData get lightTheme {
+    return ThemeData.light().copyWith(
+      scaffoldBackgroundColor: SystemColors.lightBackground,
+      primaryColor: SystemColors.lightCyanGlow,
+      colorScheme: const ColorScheme.light(
+        primary: SystemColors.lightCyanGlow,
+        secondary: SystemColors.lightBlueGlow,
+        surface: SystemColors.lightPanelBg,
+        error: SystemColors.crimsonGlow,
+      ),
+      appBarTheme: const AppBarTheme(
+        backgroundColor: SystemColors.lightPanelBg,
+        foregroundColor: SystemColors.lightTextPrimary,
+        elevation: 0,
+      ),
+      dialogTheme: const DialogThemeData(
+        backgroundColor: SystemColors.lightPanelBg,
+      ),
+      textTheme: GoogleFonts.rajdhaniTextTheme(ThemeData.light().textTheme).copyWith(
+        displayLarge: GoogleFonts.orbitron(
+          color: SystemColors.lightCyanGlow,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 2.0,
+        ),
+        headlineMedium: GoogleFonts.orbitron(
+          color: SystemColors.lightTextPrimary,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 1.5,
+        ),
+        titleLarge: GoogleFonts.orbitron(
+          color: SystemColors.lightCyanGlow,
+          fontWeight: FontWeight.w700,
+          letterSpacing: 1.2,
+        ),
+        bodyLarge: GoogleFonts.rajdhani(
+          color: SystemColors.lightTextPrimary,
+          fontSize: 16,
+          fontWeight: FontWeight.w600,
+        ),
+        bodyMedium: GoogleFonts.rajdhani(
+          color: SystemColors.lightTextSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
+      ),
+    );
+  }
+
   static BoxDecoration holographicPanel({
     Color borderColor = SystemColors.cyanGlow,
     double glowOpacity = 0.25,
     double radius = 10.0,
+    bool isDark = true,
   }) {
     return BoxDecoration(
-      color: SystemColors.panelBgTranslucent,
+      color: isDark ? SystemColors.panelBgTranslucent : SystemColors.lightPanelBgTranslucent,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: borderColor.withValues(alpha: 0.6),
+        color: borderColor.withValues(alpha: isDark ? 0.6 : 0.8),
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: borderColor.withValues(alpha: glowOpacity),
+          color: borderColor.withValues(alpha: isDark ? glowOpacity : glowOpacity * 0.7),
           blurRadius: 12,
           spreadRadius: 1,
         ),
-        const BoxShadow(
-          color: Colors.black54,
+        BoxShadow(
+          color: isDark ? Colors.black54 : Colors.black12,
           blurRadius: 10,
           spreadRadius: 2,
         ),
@@ -102,12 +203,13 @@ class SystemTheme {
     );
   }
 
-  static BoxDecoration deadlyPanel() {
+  static BoxDecoration deadlyPanel({bool isDark = true}) {
     return holographicPanel(
       borderColor: SystemColors.crimsonGlow,
       glowOpacity: 0.35,
+      isDark: isDark,
     );
   }
 
-  static BoxDecoration penaltyPanel() => deadlyPanel();
+  static BoxDecoration penaltyPanel({bool isDark = true}) => deadlyPanel(isDark: isDark);
 }

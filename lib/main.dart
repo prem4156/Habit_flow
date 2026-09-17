@@ -15,41 +15,86 @@ void main() async {
   runApp(const SoloLevelingHabitApp());
 }
 
-class SoloLevelingHabitApp extends StatelessWidget {
-  const SoloLevelingHabitApp({super.key});
+class SoloLevelingHabitApp extends StatefulWidget {
+  final SystemState? state;
+  const SoloLevelingHabitApp({super.key, this.state});
+
+  @override
+  State<SoloLevelingHabitApp> createState() => _SoloLevelingHabitAppState();
+}
+
+class _SoloLevelingHabitAppState extends State<SoloLevelingHabitApp> {
+  late final SystemState _systemState;
+  bool _ownsState = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.state != null) {
+      _systemState = widget.state!;
+    } else {
+      _systemState = SystemState();
+      _ownsState = true;
+    }
+  }
+
+  @override
+  void dispose() {
+    if (_ownsState) {
+      _systemState.dispose();
+    }
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
-    return MaterialApp(
-      title: 'Habit Flow • The System',
-      debugShowCheckedModeBanner: false,
-      theme: SystemTheme.darkTheme,
-      home: const MainSystemScreen(),
+    return ListenableBuilder(
+      listenable: _systemState,
+      builder: (context, _) {
+        return MaterialApp(
+          title: 'Habit Flow • The System',
+          debugShowCheckedModeBanner: false,
+          theme: SystemTheme.lightTheme,
+          darkTheme: SystemTheme.darkTheme,
+          themeMode: _systemState.themeMode,
+          home: MainSystemScreen(systemState: _systemState),
+        );
+      },
     );
   }
 }
 
 class MainSystemScreen extends StatefulWidget {
-  const MainSystemScreen({super.key});
+  final SystemState? systemState;
+  const MainSystemScreen({super.key, this.systemState});
 
   @override
   State<MainSystemScreen> createState() => _MainSystemScreenState();
 }
 
 class _MainSystemScreenState extends State<MainSystemScreen> {
-  final SystemState _systemState = SystemState();
+  late final SystemState _systemState;
+  bool _ownsState = false;
   int _currentIndex = 1; // Default to Quest Log, the core habit screen
 
   @override
   void initState() {
     super.initState();
+    if (widget.systemState != null) {
+      _systemState = widget.systemState!;
+    } else {
+      _systemState = SystemState();
+      _ownsState = true;
+    }
     _systemState.addListener(_onStateChange);
   }
 
   @override
   void dispose() {
     _systemState.removeListener(_onStateChange);
-    _systemState.dispose();
+    if (_ownsState) {
+      _systemState.dispose();
+    }
     super.dispose();
   }
 
@@ -61,7 +106,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
   Widget build(BuildContext context) {
     if (!_systemState.isInitialized) {
       return Scaffold(
-        backgroundColor: SystemColors.background,
+        backgroundColor: SystemTheme.getBackground(context),
         body: Center(
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
@@ -89,7 +134,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
               Text(
                 'SYNCHRONIZING WITH THE SYSTEM...',
                 style: GoogleFonts.orbitron(
-                  color: SystemColors.cyanGlow,
+                  color: SystemTheme.getPrimaryAccent(context),
                   fontSize: 14,
                   letterSpacing: 2.0,
                   fontWeight: FontWeight.bold,
@@ -113,16 +158,16 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
     ];
 
     return Scaffold(
-      backgroundColor: SystemColors.background,
+      backgroundColor: SystemTheme.getBackground(context),
       appBar: _buildSystemAppBar(),
       body: Stack(
         children: [
           // Background ambient grid texture
           Positioned.fill(
             child: Opacity(
-              opacity: 0.05,
+              opacity: SystemTheme.isDark(context) ? 0.05 : 0.03,
               child: CustomPaint(
-                painter: _GridBackgroundPainter(),
+                painter: _GridBackgroundPainter(isDark: SystemTheme.isDark(context)),
               ),
             ),
           ),
@@ -226,8 +271,9 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
   PreferredSizeWidget _buildSystemAppBar() {
     final profile = _systemState.profile;
 
+    final isDark = SystemTheme.isDark(context);
     return AppBar(
-      backgroundColor: SystemColors.panelBg,
+      backgroundColor: SystemTheme.getPanelBg(context),
       elevation: 0,
       centerTitle: false,
       title: Row(
@@ -235,14 +281,19 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
             decoration: BoxDecoration(
-              color: SystemColors.cyanGlow.withValues(alpha: 0.2),
+              color: isDark
+                  ? SystemColors.cyanGlow.withValues(alpha: 0.2)
+                  : SystemColors.lightCyanGlow.withValues(alpha: 0.12),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: SystemColors.cyanGlow, width: 1),
+              border: Border.all(
+                color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow,
+                width: 1,
+              ),
             ),
             child: Text(
               'THE SYSTEM',
               style: GoogleFonts.orbitron(
-                color: SystemColors.cyanGlow,
+                color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow,
                 fontSize: 13,
                 fontWeight: FontWeight.w900,
                 letterSpacing: 2.0,
@@ -253,7 +304,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
           Text(
             'HABIT FLOW',
             style: GoogleFonts.orbitron(
-              color: Colors.white,
+              color: SystemTheme.getTextPrimary(context),
               fontSize: 14,
               fontWeight: FontWeight.bold,
               letterSpacing: 1.5,
@@ -262,15 +313,30 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
         ],
       ),
       actions: [
+        // Theme Switcher Toggle Button (Dark / Light)
+        IconButton(
+          icon: Icon(
+            _systemState.isDarkMode ? Icons.light_mode : Icons.dark_mode,
+            color: _systemState.isDarkMode ? SystemColors.goldAccent : SystemColors.lightCyanGlow,
+            size: 20,
+          ),
+          tooltip: _systemState.isDarkMode ? 'Switch to Radiant System (Light Theme)' : 'Switch to Shadow Monarch (Dark Theme)',
+          onPressed: () => _systemState.toggleTheme(),
+        ),
+
         // Level & Rank badge
         Center(
           child: Container(
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: Colors.black45,
+              color: isDark ? Colors.black45 : Colors.black.withValues(alpha: 0.05),
               borderRadius: BorderRadius.circular(4),
-              border: Border.all(color: SystemColors.cyanGlow.withValues(alpha: 0.4)),
+              border: Border.all(
+                color: isDark
+                    ? SystemColors.cyanGlow.withValues(alpha: 0.4)
+                    : SystemColors.lightPanelBorder,
+              ),
             ),
             child: Row(
               mainAxisSize: MainAxisSize.min,
@@ -278,7 +344,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                 Text(
                   'LV.${profile.level}',
                   style: GoogleFonts.orbitron(
-                    color: SystemColors.cyanGlow,
+                    color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -458,15 +524,23 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
   }
 
   Widget _buildSystemBottomNav() {
+    final isDark = SystemTheme.isDark(context);
     return Container(
       decoration: BoxDecoration(
-        color: SystemColors.panelBg,
+        color: SystemTheme.getPanelBg(context),
         border: Border(
-          top: BorderSide(color: SystemColors.cyanGlow.withValues(alpha: 0.4), width: 1.0),
+          top: BorderSide(
+            color: isDark
+                ? SystemColors.cyanGlow.withValues(alpha: 0.4)
+                : SystemColors.lightPanelBorder,
+            width: 1.0,
+          ),
         ),
         boxShadow: [
           BoxShadow(
-            color: SystemColors.cyanGlow.withValues(alpha: 0.1),
+            color: isDark
+                ? SystemColors.cyanGlow.withValues(alpha: 0.1)
+                : Colors.black.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, -2),
           ),
@@ -477,24 +551,24 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
         onTap: (index) => setState(() => _currentIndex = index),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        selectedItemColor: SystemColors.cyanGlow,
-        unselectedItemColor: SystemColors.textSecondary,
+        selectedItemColor: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow,
+        unselectedItemColor: SystemTheme.getTextMuted(context),
         selectedLabelStyle: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
         unselectedLabelStyle: GoogleFonts.orbitron(fontSize: 9),
-        items: const [
+        items: [
           BottomNavigationBarItem(
-            icon: Icon(Icons.person),
-            activeIcon: Icon(Icons.person, color: SystemColors.cyanGlow),
+            icon: const Icon(Icons.person),
+            activeIcon: Icon(Icons.person, color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
             label: 'STATUS',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.assignment),
-            activeIcon: Icon(Icons.assignment, color: SystemColors.cyanGlow),
-            label: 'QUESTS',
+            icon: const Icon(Icons.assignment),
+            activeIcon: Icon(Icons.assignment, color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
+            label: 'TASKS',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.trending_up),
-            activeIcon: Icon(Icons.trending_up, color: SystemColors.cyanGlow),
+            icon: const Icon(Icons.trending_up),
+            activeIcon: Icon(Icons.trending_up, color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
             label: 'PROGRESS',
           ),
         ],
@@ -504,10 +578,13 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
 }
 
 class _GridBackgroundPainter extends CustomPainter {
+  final bool isDark;
+  _GridBackgroundPainter({this.isDark = true});
+
   @override
   void paint(Canvas canvas, Size size) {
     final paint = Paint()
-      ..color = SystemColors.cyanGlow
+      ..color = isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow
       ..strokeWidth = 0.5;
 
     const step = 40.0;
@@ -520,5 +597,5 @@ class _GridBackgroundPainter extends CustomPainter {
   }
 
   @override
-  bool shouldRepaint(covariant CustomPainter oldDelegate) => false;
+  bool shouldRepaint(covariant _GridBackgroundPainter oldDelegate) => oldDelegate.isDark != isDark;
 }

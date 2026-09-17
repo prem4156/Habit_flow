@@ -168,12 +168,14 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                 decoration: BoxDecoration(
                   color: _isPlayingDeadlyFx
                       ? SystemColors.monarchDark.withValues(alpha: 0.95)
-                      : SystemColors.panelBg,
+                      : SystemTheme.getPanelBg(context),
                   borderRadius: BorderRadius.circular(8.0),
                   border: Border.all(
                     color: _isPlayingDeadlyFx
                         ? SystemColors.crimsonGlow
-                        : SystemColors.cyanGlow.withValues(alpha: 0.4),
+                        : (SystemTheme.isDark(context)
+                            ? SystemColors.cyanGlow.withValues(alpha: 0.4)
+                            : SystemColors.lightPanelBorder),
                     width: _isPlayingDeadlyFx ? 1.8 : 1.2,
                   ),
                   boxShadow: [
@@ -246,7 +248,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                               Text(
                                 quest.title,
                                 style: GoogleFonts.orbitron(
-                                  color: Colors.white,
+                                  color: SystemTheme.getTextPrimary(context),
                                   fontSize: 14,
                                   fontWeight: FontWeight.bold,
                                   letterSpacing: 0.6,
@@ -256,7 +258,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                               Text(
                                 quest.description,
                                 style: GoogleFonts.rajdhani(
-                                  color: SystemColors.textSecondary,
+                                  color: SystemTheme.getTextSecondary(context),
                                   fontSize: 12,
                                   fontWeight: FontWeight.w500,
                                 ),
@@ -483,10 +485,10 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
       decoration: BoxDecoration(
-        color: Colors.black26,
+        color: SystemTheme.isDark(context) ? Colors.black26 : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(6.0),
         border: Border.all(
-          color: SystemColors.hpGreen.withValues(alpha: 0.3),
+          color: SystemColors.hpGreen.withValues(alpha: SystemTheme.isDark(context) ? 0.3 : 0.5),
           width: 0.8,
         ),
       ),
@@ -527,7 +529,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                     Text(
                       quest.title,
                       style: GoogleFonts.orbitron(
-                        color: Colors.white54,
+                        color: SystemTheme.isDark(context) ? Colors.white54 : const Color(0xFF64748B),
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.lineThrough,
@@ -537,7 +539,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                     Text(
                       'Executed • ${quest.target} ${quest.unit} • +${quest.expReward} EXP',
                       style: GoogleFonts.rajdhani(
-                        color: Colors.white38,
+                        color: SystemTheme.getTextMuted(context),
                         fontSize: 11,
                       ),
                     ),

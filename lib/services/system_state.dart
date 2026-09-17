@@ -26,6 +26,7 @@ class SystemState extends ChangeNotifier {
   static const String _prefLastPerfectDayKey = 'sl_last_perfect_day';
   static const String _prefBestStreakKey = 'sl_best_streak';
   static const String _prefTaskYearCompletionsKey = 'sl_task_year_completions';
+  static const String _prefThemeModeKey = 'sl_theme_mode';
 
   // --- Real-time Auth State ---
   AuthUser? _currentUser;
@@ -69,6 +70,7 @@ class SystemState extends ChangeNotifier {
   int _totalQuestClears = 0;
   String? _lastPerfectDay;
   int _bestStreak = 0;
+  ThemeMode _themeMode = ThemeMode.dark;
   Timer? _autonomousTimer;
   Timer? _initialDelayTimer;
 
@@ -151,6 +153,21 @@ class SystemState extends ChangeNotifier {
   int get latestLevelAchieved => _latestLevelAchieved;
   DateTime get selectedDate => _selectedDate;
   Map<String, int> get statGainsFromQuests => _statGainsFromQuests;
+  ThemeMode get themeMode => _themeMode;
+  bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  void toggleTheme() {
+    _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    saveState();
+    notifyListeners();
+  }
+
+  void setThemeMode(ThemeMode mode) {
+    if (_themeMode == mode) return;
+    _themeMode = mode;
+    saveState();
+    notifyListeners();
+  }
 
   // Autonomous system getters
   Quest? get activeEmergencyQuest => _activeEmergencyQuest;
@@ -243,8 +260,15 @@ class SystemState extends ChangeNotifier {
 
       final passwordsJson = prefs.getString(_prefPasswordsKey);
       if (passwordsJson != null) {
-        final Map map = jsonDecode(passwordsJson);
-        _passwords = map.map((k, v) => MapEntry(k.toString(), v.toString()));
+        _passwords = Map<String, String>.from(jsonDecode(passwordsJson));
+      }
+
+      // Load theme mode
+      final savedTheme = prefs.getString(_prefThemeModeKey);
+      if (savedTheme == 'light') {
+        _themeMode = ThemeMode.light;
+      } else {
+        _themeMode = ThemeMode.dark;
       }
 
       // Pre-seed sample Hunter account if no accounts exist yet
@@ -427,6 +451,7 @@ class SystemState extends ChangeNotifier {
         await prefs.setString(_userPref(_prefLastPerfectDayKey), _lastPerfectDay!);
       }
       await prefs.setInt(_userPref(_prefBestStreakKey), _bestStreak);
+      await prefs.setString(_prefThemeModeKey, _themeMode == ThemeMode.light ? 'light' : 'dark');
     } catch (e) {
       debugPrint('Error saving system state: $e');
     }

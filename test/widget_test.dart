@@ -322,4 +322,22 @@ void main() {
 
     state.dispose();
   });
+
+  test('System Theme: toggles between dark and light theme and persists state', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    expect(state.themeMode, ThemeMode.dark);
+    expect(state.isDarkMode, true);
+
+    state.toggleTheme();
+    expect(state.themeMode, ThemeMode.light);
+    expect(state.isDarkMode, false);
+
+    state.setThemeMode(ThemeMode.dark);
+    expect(state.themeMode, ThemeMode.dark);
+    expect(state.isDarkMode, true);
+
+    state.dispose();
+  });
 }
