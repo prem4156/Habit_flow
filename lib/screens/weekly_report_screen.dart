@@ -405,9 +405,17 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.06 : 0.08),
+        color: isDark ? color.withValues(alpha: 0.06) : Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.3 : 0.5), width: isDark ? 1.0 : 1.2),
+        boxShadow: [
+          if (!isDark)
+            const BoxShadow(
+              color: Color(0x080F172A),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+        ],
       ),
       child: Column(
         children: [
@@ -419,9 +427,11 @@ class _WeeklyReportScreenState extends State<WeeklyReportScreen> {
               color: SystemTheme.getTextPrimary(context),
               fontSize: 28,
               fontWeight: FontWeight.w900,
-              shadows: [
-                Shadow(color: color.withValues(alpha: 0.5), blurRadius: 10),
-              ],
+              shadows: isDark
+                  ? [
+                      Shadow(color: color.withValues(alpha: 0.5), blurRadius: 10),
+                    ]
+                  : null,
             ),
           ),
           const SizedBox(height: 4),

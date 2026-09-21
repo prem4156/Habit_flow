@@ -867,20 +867,26 @@ class _QuestScreenState extends State<QuestScreen> {
   }
 
   Widget _buildEmergencyQuestCard(BuildContext context, SystemState state) {
+    final isDark = SystemTheme.isDark(context);
     final quest = state.activeEmergencyQuest!;
     final progress = quest.progress;
+    final crimsonAccent = isDark ? SystemColors.crimsonGlow : const Color(0xFFE11D48);
+    final cardBg = isDark ? SystemColors.crimsonDark : const Color(0xFFFFF1F2);
+    final cardBorder = isDark ? SystemColors.crimsonGlow : const Color(0xFFFDA4AF);
+    final titleColor = isDark ? Colors.white : const Color(0xFF881337);
+    final descColor = isDark ? SystemColors.textSecondary : const Color(0xFF9F1239);
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 10.0),
       child: Container(
         padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
-          color: SystemColors.crimsonDark,
+          color: cardBg,
           borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: SystemColors.crimsonGlow, width: 1.5),
+          border: Border.all(color: cardBorder, width: 1.5),
           boxShadow: [
             BoxShadow(
-              color: SystemColors.crimsonGlow.withValues(alpha: 0.3),
+              color: crimsonAccent.withValues(alpha: isDark ? 0.3 : 0.12),
               blurRadius: 16,
               spreadRadius: 1,
             ),
@@ -891,14 +897,14 @@ class _QuestScreenState extends State<QuestScreen> {
           children: [
             Row(
               children: [
-                const Icon(Icons.warning_amber_rounded,
-                    color: SystemColors.crimsonGlow, size: 18),
+                Icon(Icons.warning_amber_rounded,
+                    color: crimsonAccent, size: 18),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
                     '⚠ EMERGENCY DIRECTIVE',
                     style: GoogleFonts.orbitron(
-                      color: SystemColors.crimsonGlow,
+                      color: crimsonAccent,
                       fontSize: 12,
                       fontWeight: FontWeight.w900,
                       letterSpacing: 1.5,
@@ -909,14 +915,14 @@ class _QuestScreenState extends State<QuestScreen> {
                   padding:
                       const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                   decoration: BoxDecoration(
-                    color: SystemColors.crimsonGlow.withValues(alpha: 0.2),
+                    color: crimsonAccent.withValues(alpha: isDark ? 0.2 : 0.1),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: SystemColors.crimsonGlow),
+                    border: Border.all(color: crimsonAccent),
                   ),
                   child: Text(
                     'DEADLINE ${quest.deadline ?? "23:59"}',
                     style: GoogleFonts.orbitron(
-                      color: SystemColors.crimsonGlow,
+                      color: crimsonAccent,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                     ),
@@ -928,7 +934,7 @@ class _QuestScreenState extends State<QuestScreen> {
             Text(
               quest.title,
               style: GoogleFonts.orbitron(
-                color: Colors.white,
+                color: titleColor,
                 fontSize: 15,
                 fontWeight: FontWeight.bold,
                 letterSpacing: 1.0,
@@ -938,7 +944,7 @@ class _QuestScreenState extends State<QuestScreen> {
             Text(
               quest.description,
               style: GoogleFonts.rajdhani(
-                color: SystemColors.textSecondary,
+                color: descColor,
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -950,9 +956,8 @@ class _QuestScreenState extends State<QuestScreen> {
               child: LinearProgressIndicator(
                 value: progress,
                 minHeight: 8,
-                backgroundColor: Colors.black45,
-                valueColor: const AlwaysStoppedAnimation<Color>(
-                    SystemColors.crimsonGlow),
+                backgroundColor: isDark ? Colors.black45 : const Color(0xFFFFE4E6),
+                valueColor: AlwaysStoppedAnimation<Color>(crimsonAccent),
               ),
             ),
             const SizedBox(height: 6),
@@ -962,7 +967,7 @@ class _QuestScreenState extends State<QuestScreen> {
                 Text(
                   '${quest.current} / ${quest.target} ${quest.unit}',
                   style: GoogleFonts.orbitron(
-                    color: SystemColors.textSecondary,
+                    color: descColor,
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -970,7 +975,7 @@ class _QuestScreenState extends State<QuestScreen> {
                 Text(
                   '+${quest.expReward} EXP  +2 ${quest.statReward.code}',
                   style: GoogleFonts.orbitron(
-                    color: SystemColors.crimsonGlow,
+                    color: crimsonAccent,
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -981,11 +986,11 @@ class _QuestScreenState extends State<QuestScreen> {
             // Quick action buttons
             Row(
               children: [
-                _buildEmergencyBtn(state, 1, '+1'),
+                _buildEmergencyBtn(context, state, 1, '+1'),
                 const SizedBox(width: 6),
-                _buildEmergencyBtn(state, 5, '+5'),
+                _buildEmergencyBtn(context, state, 5, '+5'),
                 const SizedBox(width: 6),
-                _buildEmergencyBtn(state, 10, '+10'),
+                _buildEmergencyBtn(context, state, 10, '+10'),
                 const Spacer(),
                 InkWell(
                   onTap: () => state.incrementEmergencyQuestProgress(
@@ -995,7 +1000,7 @@ class _QuestScreenState extends State<QuestScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                     decoration: BoxDecoration(
-                      color: SystemColors.crimsonGlow,
+                      color: crimsonAccent,
                       borderRadius: BorderRadius.circular(4),
                     ),
                     child: Text(
@@ -1016,15 +1021,15 @@ class _QuestScreenState extends State<QuestScreen> {
                     padding:
                         const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
                     decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.08),
+                      color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.black.withValues(alpha: 0.05),
                       borderRadius: BorderRadius.circular(4),
                       border: Border.all(
-                          color: Colors.white.withValues(alpha: 0.2)),
+                          color: isDark ? Colors.white.withValues(alpha: 0.2) : Colors.black12),
                     ),
                     child: Text(
                       'DISMISS',
                       style: GoogleFonts.orbitron(
-                        color: Colors.white54,
+                        color: isDark ? Colors.white54 : const Color(0xFF64748B),
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
@@ -1039,21 +1044,24 @@ class _QuestScreenState extends State<QuestScreen> {
     );
   }
 
-  Widget _buildEmergencyBtn(SystemState state, int amount, String label) {
+  Widget _buildEmergencyBtn(BuildContext context, SystemState state, int amount, String label) {
+    final isDark = SystemTheme.isDark(context);
+    final crimsonAccent = isDark ? SystemColors.crimsonGlow : const Color(0xFFE11D48);
+
     return InkWell(
       onTap: () => state.incrementEmergencyQuestProgress(amount),
       borderRadius: BorderRadius.circular(4),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
         decoration: BoxDecoration(
-          color: SystemColors.crimsonGlow.withValues(alpha: 0.15),
+          color: crimsonAccent.withValues(alpha: isDark ? 0.15 : 0.1),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: SystemColors.crimsonGlow, width: 0.8),
+          border: Border.all(color: crimsonAccent, width: 0.8),
         ),
         child: Text(
           label,
           style: GoogleFonts.orbitron(
-            color: SystemColors.crimsonGlow,
+            color: crimsonAccent,
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),

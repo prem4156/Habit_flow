@@ -167,12 +167,12 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                 padding: const EdgeInsets.all(12.0),
                 decoration: BoxDecoration(
                   color: _isPlayingDeadlyFx
-                      ? SystemColors.monarchDark.withValues(alpha: 0.95)
+                      ? (SystemTheme.isDark(context) ? SystemColors.monarchDark.withValues(alpha: 0.95) : SystemColors.lightPanelBg)
                       : SystemTheme.getPanelBg(context),
                   borderRadius: BorderRadius.circular(8.0),
                   border: Border.all(
                     color: _isPlayingDeadlyFx
-                        ? SystemColors.crimsonGlow
+                        ? (SystemTheme.isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson)
                         : (SystemTheme.isDark(context)
                             ? SystemColors.cyanGlow.withValues(alpha: 0.4)
                             : SystemColors.lightPanelBorder),
@@ -181,9 +181,10 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                   boxShadow: [
                     BoxShadow(
                       color: _isPlayingDeadlyFx
-                          ? SystemColors.monarchViolet.withValues(alpha: 0.5)
-                          : SystemColors.cyanGlow.withValues(alpha: 0.08),
-                      blurRadius: _isPlayingDeadlyFx ? 18 : 8,
+                          ? (SystemTheme.isDark(context) ? SystemColors.monarchViolet.withValues(alpha: 0.5) : SystemColors.lightCrimson.withValues(alpha: 0.25))
+                          : (SystemTheme.isDark(context) ? SystemColors.cyanGlow.withValues(alpha: 0.08) : const Color(0x0A0F172A)),
+                      blurRadius: _isPlayingDeadlyFx ? 18 : 10,
+                      offset: const Offset(0, 2),
                       spreadRadius: _isPlayingDeadlyFx ? 2 : 0,
                     ),
                   ],
@@ -211,20 +212,20 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                               shape: BoxShape.circle,
                               border: Border.all(
                                 color: _isPlayingDeadlyFx
-                                    ? SystemColors.crimsonGlow
+                                    ? (SystemTheme.isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson)
                                     : (SystemTheme.isDark(context) ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
                                 width: 2,
                               ),
                               color: _isPlayingDeadlyFx
-                                  ? SystemColors.crimsonGlow.withValues(alpha: 0.25)
-                                  : (SystemTheme.isDark(context) ? Colors.black38 : SystemColors.lightCyanGlow.withValues(alpha: 0.08)),
+                                  ? (SystemTheme.isDark(context) ? SystemColors.crimsonGlow.withValues(alpha: 0.25) : SystemColors.lightCrimson.withValues(alpha: 0.15))
+                                  : (SystemTheme.isDark(context) ? Colors.black38 : SystemColors.lightCyanGlow.withValues(alpha: 0.1)),
                               boxShadow: [
                                 BoxShadow(
                                   color: _isPlayingDeadlyFx
-                                      ? SystemColors.crimsonGlow.withValues(alpha: 0.6)
+                                      ? (SystemTheme.isDark(context) ? SystemColors.crimsonGlow.withValues(alpha: 0.6) : SystemColors.lightCrimson.withValues(alpha: 0.3))
                                       : (SystemTheme.isDark(context)
                                           ? SystemColors.cyanGlow.withValues(alpha: 0.2)
-                                          : SystemColors.lightCyanGlow.withValues(alpha: 0.15)),
+                                          : SystemColors.lightCyanGlow.withValues(alpha: 0.2)),
                                   blurRadius: 8,
                                 ),
                               ],
@@ -233,7 +234,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                               child: Icon(
                                 _isPlayingDeadlyFx ? Icons.offline_bolt : Icons.circle_outlined,
                                 color: _isPlayingDeadlyFx
-                                    ? SystemColors.crimsonGlow
+                                    ? (SystemTheme.isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson)
                                     : (SystemTheme.isDark(context)
                                         ? SystemColors.cyanGlow.withValues(alpha: 0.6)
                                         : SystemColors.lightCyanGlow),
@@ -418,17 +419,20 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                             decoration: BoxDecoration(
-                              color: SystemColors.shadowBlack.withValues(alpha: 0.95),
+                              color: SystemTheme.isDark(context) ? SystemColors.shadowBlack.withValues(alpha: 0.95) : Colors.white,
                               borderRadius: BorderRadius.circular(6),
-                              border: Border.all(color: SystemColors.crimsonGlow, width: 1.5),
+                              border: Border.all(
+                                color: SystemTheme.isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson,
+                                width: 1.5,
+                              ),
                               boxShadow: [
                                 BoxShadow(
-                                  color: SystemColors.crimsonGlow.withValues(alpha: 0.5),
+                                  color: (SystemTheme.isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson).withValues(alpha: SystemTheme.isDark(context) ? 0.5 : 0.25),
                                   blurRadius: 14,
                                   spreadRadius: 2,
                                 ),
                                 BoxShadow(
-                                  color: SystemColors.monarchViolet.withValues(alpha: 0.4),
+                                  color: (SystemTheme.isDark(context) ? SystemColors.monarchViolet : SystemColors.lightMonarchViolet).withValues(alpha: SystemTheme.isDark(context) ? 0.4 : 0.2),
                                   blurRadius: 22,
                                 ),
                               ],
@@ -440,7 +444,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                                 Text(
                                   'EXECUTED: ',
                                   style: GoogleFonts.orbitron(
-                                    color: SystemColors.crimsonGlow,
+                                    color: SystemTheme.isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson,
                                     fontSize: 11,
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1.0,
@@ -458,7 +462,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                                 Text(
                                   '• +${quest.expReward} EXP',
                                   style: GoogleFonts.rajdhani(
-                                    color: SystemColors.goldAccent,
+                                    color: SystemTheme.getGoldAccent(context),
                                     fontSize: 12,
                                     fontWeight: FontWeight.bold,
                                   ),
@@ -494,11 +498,11 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
       decoration: BoxDecoration(
-        color: isDark ? Colors.black26 : const Color(0xFFF8FAFC),
+        color: isDark ? Colors.black26 : const Color(0xFFF0FDF4),
         borderRadius: BorderRadius.circular(6.0),
         border: Border.all(
-          color: green.withValues(alpha: isDark ? 0.3 : 0.4),
-          width: 0.8,
+          color: green.withValues(alpha: isDark ? 0.3 : 0.5),
+          width: 0.9,
         ),
       ),
       child: Column(
@@ -538,11 +542,11 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                     Text(
                       quest.title,
                       style: GoogleFonts.orbitron(
-                        color: isDark ? Colors.white54 : const Color(0xFF64748B),
+                        color: isDark ? Colors.white54 : const Color(0xFF475569),
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.lineThrough,
-                        decorationColor: green.withValues(alpha: 0.6),
+                        decorationColor: green.withValues(alpha: 0.7),
                       ),
                     ),
                     Text(
@@ -550,6 +554,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                       style: GoogleFonts.rajdhani(
                         color: SystemTheme.getTextMuted(context),
                         fontSize: 11,
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],

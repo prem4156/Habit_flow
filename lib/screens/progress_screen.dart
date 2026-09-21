@@ -311,9 +311,21 @@ class ProgressScreen extends StatelessWidget {
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: isDark ? 0.06 : 0.08),
+        color: isDark ? color.withValues(alpha: 0.06) : Colors.white,
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: isDark ? 0.3 : 0.4)),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.3 : 0.5), width: isDark ? 1.0 : 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: color.withValues(alpha: isDark ? 0.12 : 0.08),
+            blurRadius: 10,
+          ),
+          if (!isDark)
+            const BoxShadow(
+              color: Color(0x0A0F172A),
+              blurRadius: 8,
+              offset: Offset(0, 2),
+            ),
+        ],
       ),
       child: Column(
         children: [
@@ -521,14 +533,22 @@ class ProgressScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: achievement.isUnlocked
               ? tierColor.withValues(alpha: isDark ? 0.08 : 0.12)
-              : (isDark ? Colors.black38 : const Color(0xFFF8FAFC)),
+              : (isDark ? Colors.black38 : Colors.white),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: achievement.isUnlocked
-                ? tierColor.withValues(alpha: isDark ? 0.5 : 0.6)
-                : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
-            width: achievement.isUnlocked ? 1.2 : 0.8,
+                ? tierColor.withValues(alpha: isDark ? 0.5 : 0.65)
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : SystemColors.lightPanelBorder),
+            width: achievement.isUnlocked ? 1.2 : 1.0,
           ),
+          boxShadow: [
+            if (!isDark)
+              const BoxShadow(
+                color: Color(0x060F172A),
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+          ],
         ),
         child: Row(
           children: [

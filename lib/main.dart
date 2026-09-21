@@ -201,24 +201,30 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                     decoration: BoxDecoration(
-                      color: SystemColors.shadowBlack.withValues(alpha: 0.96),
+                      color: SystemTheme.isDark(context) ? SystemColors.shadowBlack.withValues(alpha: 0.96) : Colors.white,
                       borderRadius: BorderRadius.circular(8),
                       border: Border.all(
                         color: _systemState.lastSystemMessage!.contains('EXECUTED')
-                            ? SystemColors.crimsonGlow
+                            ? (SystemTheme.isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson)
                             : _systemState.lastSystemMessage!.contains('LEVEL UP') || _systemState.lastSystemMessage!.contains('ACHIEVEMENT')
-                                ? SystemColors.monarchViolet
-                                : SystemColors.cyanGlow,
+                                ? (SystemTheme.isDark(context) ? SystemColors.monarchViolet : SystemColors.lightMonarchViolet)
+                                : (SystemTheme.isDark(context) ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
                         width: 1.4,
                       ),
                       boxShadow: [
                         BoxShadow(
                           color: _systemState.lastSystemMessage!.contains('EXECUTED')
-                              ? SystemColors.crimsonGlow.withValues(alpha: 0.35)
-                              : SystemColors.cyanGlow.withValues(alpha: 0.35),
+                              ? (SystemTheme.isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson).withValues(alpha: SystemTheme.isDark(context) ? 0.35 : 0.2)
+                              : (SystemTheme.isDark(context) ? SystemColors.cyanGlow : SystemColors.lightCyanGlow).withValues(alpha: SystemTheme.isDark(context) ? 0.35 : 0.2),
                           blurRadius: 16,
                           spreadRadius: 1,
                         ),
+                        if (!SystemTheme.isDark(context))
+                          BoxShadow(
+                            color: const Color(0x120F172A),
+                            blurRadius: 10,
+                            offset: const Offset(0, 3),
+                          ),
                       ],
                     ),
                     child: Row(
@@ -230,10 +236,10 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                                   ? Icons.military_tech
                                   : Icons.notifications_active,
                           color: _systemState.lastSystemMessage!.contains('EXECUTED')
-                              ? SystemColors.crimsonGlow
+                              ? (SystemTheme.isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson)
                               : _systemState.lastSystemMessage!.contains('LEVEL UP')
-                                  ? SystemColors.monarchViolet
-                                  : SystemColors.cyanGlow,
+                                  ? (SystemTheme.isDark(context) ? SystemColors.monarchViolet : SystemColors.lightMonarchViolet)
+                                  : (SystemTheme.isDark(context) ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
                           size: 20,
                         ),
                         const SizedBox(width: 10),
@@ -241,13 +247,17 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                           child: Text(
                             _systemState.lastSystemMessage!,
                             style: GoogleFonts.rajdhani(
-                              color: SystemColors.textPrimary,
+                              color: SystemTheme.getTextPrimary(context),
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
                           ),
                         ),
-                        const Icon(Icons.close, color: Colors.white38, size: 16),
+                        Icon(
+                          Icons.close,
+                          color: SystemTheme.isDark(context) ? Colors.white38 : SystemTheme.getTextMuted(context),
+                          size: 16,
+                        ),
                       ],
                     ),
                   ),
@@ -315,15 +325,23 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
         ],
       ),
       actions: [
-        // Theme Switcher Toggle Button (Dark / Light)
+        // Theme Switcher Toggle Button (Dark / Light / Solar Adaptive)
         IconButton(
           icon: Icon(
-            _systemState.isDarkMode ? Icons.light_mode : Icons.dark_mode,
-            color: _systemState.isDarkMode ? SystemColors.goldAccent : SystemColors.lightCyanGlow,
+            _systemState.isAdaptiveThemeEnabled
+                ? Icons.brightness_auto
+                : (_systemState.isDarkMode ? Icons.light_mode : Icons.dark_mode),
+            color: _systemState.isAdaptiveThemeEnabled
+                ? (_systemState.isDaytimeNow ? SystemColors.goldAccent : (isDark ? SystemColors.monarchPurple : SystemColors.lightMonarchPurple))
+                : (_systemState.isDarkMode ? SystemColors.goldAccent : SystemColors.lightCyanGlow),
             size: 20,
           ),
-          tooltip: _systemState.isDarkMode ? 'Switch to Radiant System (Light Theme)' : 'Switch to Shadow Monarch (Dark Theme)',
-          onPressed: () => _systemState.toggleTheme(),
+          tooltip: _systemState.isAdaptiveThemeEnabled
+              ? 'Solar Adaptive Theme (${_systemState.isDaytimeNow ? "Day/Light" : "Night/Dark"}) - Tap to cycle'
+              : (_systemState.isDarkMode
+                  ? 'Switch to Radiant System (Light Theme)'
+                  : 'Switch to Solar Adaptive (Auto Theme)'),
+          onPressed: () => _systemState.cycleThemeMode(),
         ),
 
         // Level & Rank badge
@@ -538,6 +556,8 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
 
   Widget _buildSystemBottomNav() {
     final isDark = SystemTheme.isDark(context);
+    final accent = isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow;
+
     return Container(
       decoration: BoxDecoration(
         color: SystemTheme.getPanelBg(context),
@@ -553,9 +573,9 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
           BoxShadow(
             color: isDark
                 ? SystemColors.cyanGlow.withValues(alpha: 0.1)
-                : Colors.black.withValues(alpha: 0.05),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
+                : const Color(0x0C0F172A),
+            blurRadius: 12,
+            offset: const Offset(0, -3),
           ),
         ],
       ),
@@ -564,24 +584,45 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
         onTap: (index) => setState(() => _currentIndex = index),
         backgroundColor: Colors.transparent,
         elevation: 0,
-        selectedItemColor: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow,
+        selectedItemColor: accent,
         unselectedItemColor: SystemTheme.getTextMuted(context),
         selectedLabelStyle: GoogleFonts.orbitron(fontSize: 10, fontWeight: FontWeight.bold),
         unselectedLabelStyle: GoogleFonts.orbitron(fontSize: 9),
         items: [
           BottomNavigationBarItem(
-            icon: const Icon(Icons.person),
-            activeIcon: Icon(Icons.person, color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
+            icon: const Icon(Icons.person_outline),
+            activeIcon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: isDark ? 0.2 : 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.person, color: accent, size: 22),
+            ),
             label: 'STATUS',
           ),
           BottomNavigationBarItem(
-            icon: const Icon(Icons.assignment),
-            activeIcon: Icon(Icons.assignment, color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
+            icon: const Icon(Icons.assignment_outlined),
+            activeIcon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: isDark ? 0.2 : 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.assignment, color: accent, size: 22),
+            ),
             label: 'TASKS',
           ),
           BottomNavigationBarItem(
             icon: const Icon(Icons.trending_up),
-            activeIcon: Icon(Icons.trending_up, color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
+            activeIcon: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 3),
+              decoration: BoxDecoration(
+                color: accent.withValues(alpha: isDark ? 0.2 : 0.12),
+                borderRadius: BorderRadius.circular(12),
+              ),
+              child: Icon(Icons.trending_up, color: accent, size: 22),
+            ),
             label: 'PROGRESS',
           ),
         ],

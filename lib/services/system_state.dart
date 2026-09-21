@@ -28,6 +28,7 @@ class SystemState extends ChangeNotifier {
   static const String _prefBestStreakKey = 'sl_best_streak';
   static const String _prefTaskYearCompletionsKey = 'sl_task_year_completions';
   static const String _prefThemeModeKey = 'sl_theme_mode';
+  static const String _prefAdaptiveThemeKey = 'sl_adaptive_theme_enabled';
   static const String _prefReminderEnabledKey = 'sl_reminder_enabled';
   static const String _prefReminderHourKey = 'sl_reminder_hour';
   static const String _prefReminderMinuteKey = 'sl_reminder_minute';
@@ -75,6 +76,8 @@ class SystemState extends ChangeNotifier {
   String? _lastPerfectDay;
   int _bestStreak = 0;
   ThemeMode _themeMode = ThemeMode.dark;
+  bool _isAdaptiveThemeEnabled = false;
+  Timer? _adaptiveThemeTimer;
   Timer? _autonomousTimer;
   Timer? _initialDelayTimer;
 
@@ -161,22 +164,74 @@ class SystemState extends ChangeNotifier {
   int get latestLevelAchieved => _latestLevelAchieved;
   DateTime get selectedDate => _selectedDate;
   Map<String, int> get statGainsFromQuests => _statGainsFromQuests;
-  ThemeMode get themeMode => _themeMode;
-  bool get isDarkMode => _themeMode == ThemeMode.dark;
+  /// True if current local time is between 06:00 and 18:00 (daytime)
+  bool get isDaytimeNow {
+    final hour = DateTime.now().hour;
+    return hour >= 6 && hour < 18;
+  }
+
+  /// Active theme mode: respects adaptive solar sync if enabled, else manual choice
+  ThemeMode get themeMode {
+    if (_isAdaptiveThemeEnabled) {
+      return isDaytimeNow ? ThemeMode.light : ThemeMode.dark;
+    }
+    return _themeMode;
+  }
+
+  bool get isDarkMode => themeMode == ThemeMode.dark;
+  bool get isAdaptiveThemeEnabled => _isAdaptiveThemeEnabled;
 
   // Reminder getters
   bool get isReminderEnabled => _reminderEnabled;
   TimeOfDay? get reminderTime => _reminderTime;
 
-  void toggleTheme() {
-    _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+  void setAdaptiveTheme(bool enabled) {
+    _isAdaptiveThemeEnabled = enabled;
+    saveState();
+    notifyListeners();
+  }
+
+  void toggleAdaptiveTheme() {
+    _isAdaptiveThemeEnabled = !_isAdaptiveThemeEnabled;
     saveState();
     notifyListeners();
   }
 
   void setThemeMode(ThemeMode mode) {
-    if (_themeMode == mode) return;
+    _isAdaptiveThemeEnabled = false;
     _themeMode = mode;
+    saveState();
+    notifyListeners();
+  }
+
+  void toggleTheme() {
+    if (_isAdaptiveThemeEnabled) {
+      _isAdaptiveThemeEnabled = false;
+      _themeMode = isDarkMode ? ThemeMode.light : ThemeMode.dark;
+    } else {
+      _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
+    }
+    saveState();
+    notifyListeners();
+  }
+
+  void cycleThemeMode() {
+    if (!_isAdaptiveThemeEnabled && _themeMode == ThemeMode.dark) {
+      // Dark -> Light
+      _isAdaptiveThemeEnabled = false;
+      _themeMode = ThemeMode.light;
+      postSystemMessage('[SYSTEM] Interface Calibrated: Radiant Crystal (Light)');
+    } else if (!_isAdaptiveThemeEnabled && _themeMode == ThemeMode.light) {
+      // Light -> Solar Adaptive
+      _isAdaptiveThemeEnabled = true;
+      final modeName = isDaytimeNow ? 'Day Detected (Radiant Light)' : 'Night Detected (Shadow Dark)';
+      postSystemMessage('[SYSTEM] Solar Adaptive Sync Active: $modeName');
+    } else {
+      // Solar Adaptive -> Dark
+      _isAdaptiveThemeEnabled = false;
+      _themeMode = ThemeMode.dark;
+      postSystemMessage('[SYSTEM] Interface Calibrated: Shadow Monarch (Dark)');
+    }
     saveState();
     notifyListeners();
   }
@@ -257,6 +312,11 @@ class SystemState extends ChangeNotifier {
 
   SystemState() {
     _loadState();
+    _adaptiveThemeTimer = Timer.periodic(const Duration(seconds: 30), (_) {
+      if (_isAdaptiveThemeEnabled) {
+        notifyListeners();
+      }
+    });
   }
 
   Future<void> _loadState() async {
@@ -275,8 +335,10 @@ class SystemState extends ChangeNotifier {
         _passwords = Map<String, String>.from(jsonDecode(passwordsJson));
       }
 
-      // Load theme mode
+      // Load theme mode & adaptive settings
       final savedTheme = prefs.getString(_prefThemeModeKey);
+      _isAdaptiveThemeEnabled = prefs.getBool(_prefAdaptiveThemeKey) ?? false;
+
       // Load reminder settings (global, not per-user)
       _reminderEnabled = prefs.getBool(_prefReminderEnabledKey) ?? false;
       final rHour = prefs.getInt(_prefReminderHourKey);
@@ -479,6 +541,7 @@ class SystemState extends ChangeNotifier {
       }
       await prefs.setInt(_userPref(_prefBestStreakKey), _bestStreak);
       await prefs.setString(_prefThemeModeKey, _themeMode == ThemeMode.light ? 'light' : 'dark');
+      await prefs.setBool(_prefAdaptiveThemeKey, _isAdaptiveThemeEnabled);
 
       // Save reminder settings
       await prefs.setBool(_prefReminderEnabledKey, _reminderEnabled);
@@ -1474,6 +1537,7 @@ class SystemState extends ChangeNotifier {
 
   @override
   void dispose() {
+    _adaptiveThemeTimer?.cancel();
     _autonomousTimer?.cancel();
     _initialDelayTimer?.cancel();
     super.dispose();

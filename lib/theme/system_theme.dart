@@ -8,24 +8,28 @@ class SystemColors {
   static const Color panelBgTranslucent = Color(0xCC0C1427);
   static const Color panelBorder = Color(0xFF1E3A5F);
 
-  // --- Light Mode Base Colors (Radiant System Theme) ---
+  // --- Light Mode Base Colors (Radiant Crystal System Theme) ---
   static const Color lightBackground = Color(0xFFF8FAFC);
   static const Color lightPanelBg = Color(0xFFFFFFFF);
-  static const Color lightPanelBgTranslucent = Color(0xF2FFFFFF);
-  static const Color lightPanelBorder = Color(0xFFE2E8F0);
+  static const Color lightPanelBgTranslucent = Color(0xF7FFFFFF);
+  static const Color lightPanelBorder = Color(0xFFCBD5E1);
   static const Color lightCardBg = Color(0xFFF1F5F9);
   static const Color lightProgressTrack = Color(0xFFE2E8F0);
   static const Color lightTextPrimary = Color(0xFF0F172A);
-  static const Color lightTextSecondary = Color(0xFF475569);
-  static const Color lightTextMuted = Color(0xFF94A3B8);
+  static const Color lightTextSecondary = Color(0xFF334155);
+  static const Color lightTextMuted = Color(0xFF64748B);
   static const Color lightCyanGlow = Color(0xFF0284C7);
-  static const Color lightBlueGlow = Color(0xFF0369A1);
+  static const Color lightBlueGlow = Color(0xFF2563EB);
+  static const Color lightDarkBlue = Color(0xFF0369A1);
   static const Color lightGoldAccent = Color(0xFFD97706);
   static const Color lightHpGreen = Color(0xFF16A34A);
-  static const Color lightCrimson = Color(0xFFDC2626);
+  static const Color lightCrimson = Color(0xFFE11D48);
   static const Color lightMonarchPurple = Color(0xFF7C3AED);
+  static const Color lightMonarchViolet = Color(0xFF9333EA);
+  static const Color lightFatigueAmber = Color(0xFFD97706);
+  static const Color lightMpBlue = Color(0xFF2563EB);
   
-  // --- Accent Glows ---
+  // --- Accent Glows (Dark Mode) ---
   static const Color cyanGlow = Color(0xFF00F0FF);
   static const Color blueGlow = Color(0xFF0084FF);
   static const Color darkBlue = Color(0xFF0E223D);
@@ -37,7 +41,7 @@ class SystemColors {
   static const Color monarchDark = Color(0xFF19092B);
   static const Color shadowBlack = Color(0xFF03050C);
 
-  // Backward compatibility alias
+  // Backward compatibility aliases
   static const Color penaltyRed = crimsonGlow;
   static const Color penaltyDark = crimsonDark;
   
@@ -175,7 +179,7 @@ class SystemTheme {
         backgroundColor: SystemColors.lightPanelBg,
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(10),
-          side: const BorderSide(color: SystemColors.lightCyanGlow, width: 1.2),
+          side: const BorderSide(color: SystemColors.lightCyanGlow, width: 1.4),
         ),
       ),
       inputDecorationTheme: InputDecorationTheme(
@@ -193,7 +197,7 @@ class SystemTheme {
           borderRadius: BorderRadius.circular(6),
           borderSide: const BorderSide(color: SystemColors.lightCyanGlow, width: 1.5),
         ),
-        labelStyle: GoogleFonts.rajdhani(color: SystemColors.lightTextSecondary),
+        labelStyle: GoogleFonts.rajdhani(color: SystemColors.lightTextSecondary, fontWeight: FontWeight.w600),
         hintStyle: GoogleFonts.rajdhani(color: SystemColors.lightTextMuted),
       ),
       textTheme: GoogleFonts.rajdhaniTextTheme(ThemeData.light().textTheme).copyWith(
@@ -244,14 +248,15 @@ class SystemTheme {
       ),
       boxShadow: [
         BoxShadow(
-          color: effectiveBorder.withValues(alpha: isDark ? glowOpacity : glowOpacity * 0.4),
-          blurRadius: 12,
+          color: effectiveBorder.withValues(alpha: isDark ? glowOpacity : glowOpacity * 0.35),
+          blurRadius: 14,
           spreadRadius: 1,
         ),
         BoxShadow(
-          color: isDark ? Colors.black54 : Colors.black.withValues(alpha: 0.05),
-          blurRadius: 10,
-          spreadRadius: isDark ? 2 : 1,
+          color: isDark ? Colors.black54 : const Color(0x0D0F172A),
+          blurRadius: 12,
+          offset: const Offset(0, 3),
+          spreadRadius: isDark ? 2 : 0,
         ),
       ],
     );

@@ -54,21 +54,21 @@ class SystemWindow extends StatelessWidget {
         border: Border.all(
           color: isDark
               ? effectiveBorderColor.withValues(alpha: 0.5)
-              : effectiveBorderColor.withValues(alpha: 0.35),
-          width: 1.2,
+              : effectiveBorderColor.withValues(alpha: 0.55),
+          width: isDark ? 1.2 : 1.4,
         ),
         boxShadow: [
           BoxShadow(
             color: isDark
                 ? effectiveBorderColor.withValues(alpha: 0.18)
-                : effectiveBorderColor.withValues(alpha: 0.08),
+                : effectiveBorderColor.withValues(alpha: 0.12),
             blurRadius: 16,
             spreadRadius: 1,
           ),
           BoxShadow(
-            color: isDark ? Colors.black87 : Colors.black.withValues(alpha: 0.04),
-            blurRadius: 10,
-            offset: const Offset(0, 2),
+            color: isDark ? Colors.black87 : const Color(0x0C0F172A),
+            blurRadius: 12,
+            offset: const Offset(0, 3),
             spreadRadius: isDark ? 2 : 0,
           ),
         ],

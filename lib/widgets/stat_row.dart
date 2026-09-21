@@ -55,12 +55,19 @@ class StatRow extends StatelessWidget {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
         decoration: BoxDecoration(
-          color: isDark ? SystemColors.panelBg.withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
+          color: isDark ? SystemColors.panelBg.withValues(alpha: 0.6) : Colors.white,
           borderRadius: BorderRadius.circular(6.0),
           border: Border.all(
-            color: color.withValues(alpha: isDark ? 0.3 : 0.4),
-            width: 1.0,
+            color: color.withValues(alpha: isDark ? 0.3 : 0.45),
+            width: isDark ? 1.0 : 1.2,
           ),
+          boxShadow: [
+            BoxShadow(
+              color: isDark ? Colors.black26 : const Color(0x080F172A),
+              blurRadius: 6,
+              offset: const Offset(0, 2),
+            ),
+          ],
         ),
         child: Row(
           children: [

@@ -17,10 +17,10 @@ class AlarmSettingsWidget extends StatelessWidget {
     final accentColor = isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow;
     final panelBg = isDark
         ? SystemColors.shadowBlack.withValues(alpha: 0.7)
-        : const Color(0xFFF8FAFC);
+        : Colors.white;
     final borderColor = isDark
         ? SystemColors.cyanGlow.withValues(alpha: 0.3)
-        : const Color(0xFFCBD5E1);
+        : SystemColors.lightPanelBorder;
 
     final timeStr = state.reminderTime != null
         ? '${state.reminderTime!.hour.toString().padLeft(2, '0')}:${state.reminderTime!.minute.toString().padLeft(2, '0')}'
@@ -31,13 +31,19 @@ class AlarmSettingsWidget extends StatelessWidget {
       decoration: BoxDecoration(
         color: panelBg,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: borderColor, width: 1.2),
+        border: Border.all(color: borderColor, width: isDark ? 1.2 : 1.4),
         boxShadow: [
           if (state.isReminderEnabled)
             BoxShadow(
-              color: accentColor.withValues(alpha: 0.15),
+              color: accentColor.withValues(alpha: isDark ? 0.15 : 0.12),
               blurRadius: 16,
               spreadRadius: 1,
+            ),
+          if (!isDark)
+            const BoxShadow(
+              color: Color(0x0A0F172A),
+              blurRadius: 10,
+              offset: Offset(0, 2),
             ),
         ],
       ),
@@ -217,23 +223,30 @@ class AlarmSettingsWidget extends StatelessWidget {
       builder: (context, child) {
         return Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
-              primary: accentColor,
-              onPrimary: Colors.black,
-              surface: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF1F5F9),
-              onSurface: isDark ? Colors.white : Colors.black87,
-            ),
+            colorScheme: isDark
+                ? ColorScheme.dark(
+                    primary: accentColor,
+                    onPrimary: Colors.black,
+                    surface: const Color(0xFF1A1A2E),
+                    onSurface: Colors.white,
+                  )
+                : ColorScheme.light(
+                    primary: accentColor,
+                    onPrimary: Colors.white,
+                    surface: Colors.white,
+                    onSurface: SystemColors.lightTextPrimary,
+                  ),
             timePickerTheme: TimePickerThemeData(
-              backgroundColor: isDark ? const Color(0xFF1A1A2E) : const Color(0xFFF8FAFC),
+              backgroundColor: isDark ? const Color(0xFF1A1A2E) : Colors.white,
               dialHandColor: accentColor,
-              hourMinuteColor: accentColor.withValues(alpha: 0.15),
-              hourMinuteTextColor: isDark ? Colors.white : Colors.black87,
-              dayPeriodColor: accentColor.withValues(alpha: 0.15),
-              dayPeriodTextColor: isDark ? Colors.white : Colors.black87,
+              hourMinuteColor: accentColor.withValues(alpha: isDark ? 0.15 : 0.12),
+              hourMinuteTextColor: isDark ? Colors.white : SystemColors.lightTextPrimary,
+              dayPeriodColor: accentColor.withValues(alpha: isDark ? 0.15 : 0.12),
+              dayPeriodTextColor: isDark ? Colors.white : SystemColors.lightTextPrimary,
               entryModeIconColor: accentColor,
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(16),
-                side: BorderSide(color: accentColor.withValues(alpha: 0.3)),
+                side: BorderSide(color: accentColor.withValues(alpha: isDark ? 0.3 : 0.5)),
               ),
             ),
           ),

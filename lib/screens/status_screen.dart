@@ -487,7 +487,7 @@ class StatusScreen extends StatelessWidget {
           // Daily Quest Alarm Settings
           AlarmSettingsWidget(state: state),
 
-          // System Theme Calibration (Dark / Light)
+          // System Theme Calibration (Dark / Light / Adaptive)
           SystemWindow(
             title: 'System Interface Calibration',
             child: Column(
@@ -495,19 +495,20 @@ class StatusScreen extends StatelessWidget {
               children: [
                 Row(
                   children: [
+                    // 1. Shadow Monarch Dark Card
                     Expanded(
                       child: InkWell(
                         onTap: () => state.setThemeMode(ThemeMode.dark),
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
                           decoration: BoxDecoration(
-                            color: state.isDarkMode
+                            color: (!state.isAdaptiveThemeEnabled && state.themeMode == ThemeMode.dark)
                                 ? SystemColors.monarchDark.withValues(alpha: 0.8)
                                 : (isDark ? Colors.black26 : const Color(0xFFF1F5F9)),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: state.isDarkMode
+                              color: (!state.isAdaptiveThemeEnabled && state.themeMode == ThemeMode.dark)
                                   ? SystemColors.cyanGlow
                                   : (isDark ? Colors.transparent : const Color(0xFFE2E8F0)),
                               width: 1.5,
@@ -517,23 +518,27 @@ class StatusScreen extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.dark_mode,
-                                color: state.isDarkMode ? SystemColors.cyanGlow : SystemTheme.getTextMuted(context),
-                                size: 24,
+                                color: (!state.isAdaptiveThemeEnabled && state.themeMode == ThemeMode.dark)
+                                    ? SystemColors.cyanGlow
+                                    : SystemTheme.getTextMuted(context),
+                                size: 22,
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 5),
                               Text(
-                                'SHADOW MONARCH',
+                                'SHADOW',
                                 style: GoogleFonts.orbitron(
-                                  color: state.isDarkMode ? SystemColors.cyanGlow : SystemTheme.getTextPrimary(context),
-                                  fontSize: 10.5,
+                                  color: (!state.isAdaptiveThemeEnabled && state.themeMode == ThemeMode.dark)
+                                      ? SystemColors.cyanGlow
+                                      : SystemTheme.getTextPrimary(context),
+                                  fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                'Dark Holographic HUD',
+                                'Dark HUD',
                                 style: GoogleFonts.rajdhani(
                                   color: SystemTheme.getTextSecondary(context),
-                                  fontSize: 11,
+                                  fontSize: 10.5,
                                 ),
                               ),
                             ],
@@ -541,21 +546,23 @@ class StatusScreen extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 8),
+
+                    // 2. Radiant System Light Card
                     Expanded(
                       child: InkWell(
                         onTap: () => state.setThemeMode(ThemeMode.light),
                         borderRadius: BorderRadius.circular(8),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
                           decoration: BoxDecoration(
-                            color: !state.isDarkMode
+                            color: (!state.isAdaptiveThemeEnabled && state.themeMode == ThemeMode.light)
                                 ? SystemColors.lightCyanGlow.withValues(alpha: 0.15)
                                 : (isDark ? Colors.black26 : const Color(0xFFF1F5F9)),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: !state.isDarkMode
-                                  ? SystemColors.lightCyanGlow
+                              color: (!state.isAdaptiveThemeEnabled && state.themeMode == ThemeMode.light)
+                                  ? (isDark ? SystemColors.lightCyanGlow : const Color(0xFF0284C7))
                                   : (isDark ? Colors.transparent : const Color(0xFFE2E8F0)),
                               width: 1.5,
                             ),
@@ -564,23 +571,82 @@ class StatusScreen extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.light_mode,
-                                color: !state.isDarkMode ? SystemTheme.getGoldAccent(context) : SystemTheme.getTextMuted(context),
-                                size: 24,
+                                color: (!state.isAdaptiveThemeEnabled && state.themeMode == ThemeMode.light)
+                                    ? SystemTheme.getGoldAccent(context)
+                                    : SystemTheme.getTextMuted(context),
+                                size: 22,
                               ),
-                              const SizedBox(height: 6),
+                              const SizedBox(height: 5),
                               Text(
-                                'RADIANT SYSTEM',
+                                'RADIANT',
                                 style: GoogleFonts.orbitron(
-                                  color: !state.isDarkMode ? SystemColors.lightCyanGlow : SystemTheme.getTextPrimary(context),
-                                  fontSize: 10.5,
+                                  color: (!state.isAdaptiveThemeEnabled && state.themeMode == ThemeMode.light)
+                                      ? (isDark ? SystemColors.lightCyanGlow : const Color(0xFF0284C7))
+                                      : SystemTheme.getTextPrimary(context),
+                                  fontSize: 10,
                                   fontWeight: FontWeight.bold,
                                 ),
                               ),
                               Text(
-                                'Light Crystal HUD',
+                                'Light HUD',
                                 style: GoogleFonts.rajdhani(
                                   color: SystemTheme.getTextSecondary(context),
-                                  fontSize: 11,
+                                  fontSize: 10.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+
+                    // 3. Solar Adaptive Card
+                    Expanded(
+                      child: InkWell(
+                        onTap: () => state.setAdaptiveTheme(true),
+                        borderRadius: BorderRadius.circular(8),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 6),
+                          decoration: BoxDecoration(
+                            color: state.isAdaptiveThemeEnabled
+                                ? (state.isDaytimeNow
+                                    ? SystemTheme.getGoldAccent(context).withValues(alpha: 0.15)
+                                    : SystemTheme.getPurpleAccent(context).withValues(alpha: 0.15))
+                                : (isDark ? Colors.black26 : const Color(0xFFF1F5F9)),
+                            borderRadius: BorderRadius.circular(8),
+                            border: Border.all(
+                              color: state.isAdaptiveThemeEnabled
+                                  ? (state.isDaytimeNow ? SystemTheme.getGoldAccent(context) : SystemTheme.getPurpleAccent(context))
+                                  : (isDark ? Colors.transparent : const Color(0xFFE2E8F0)),
+                              width: 1.5,
+                            ),
+                          ),
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.brightness_auto,
+                                color: state.isAdaptiveThemeEnabled
+                                    ? (state.isDaytimeNow ? SystemTheme.getGoldAccent(context) : SystemTheme.getPurpleAccent(context))
+                                    : SystemTheme.getTextMuted(context),
+                                size: 22,
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                'ADAPTIVE',
+                                style: GoogleFonts.orbitron(
+                                  color: state.isAdaptiveThemeEnabled
+                                      ? (state.isDaytimeNow ? SystemTheme.getGoldAccent(context) : SystemTheme.getPurpleAccent(context))
+                                      : SystemTheme.getTextPrimary(context),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'Auto Time',
+                                style: GoogleFonts.rajdhani(
+                                  color: SystemTheme.getTextSecondary(context),
+                                  fontSize: 10.5,
                                 ),
                               ),
                             ],
@@ -589,6 +655,99 @@ class StatusScreen extends StatelessWidget {
                       ),
                     ),
                   ],
+                ),
+                const SizedBox(height: 12),
+
+                // Adaptive Time Sync Protocol details tile
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: isDark ? Colors.black38 : const Color(0xFFF8FAFC),
+                    borderRadius: BorderRadius.circular(8),
+                    border: Border.all(
+                      color: state.isAdaptiveThemeEnabled
+                          ? (state.isDaytimeNow ? SystemTheme.getGoldAccent(context).withValues(alpha: 0.5) : SystemTheme.getPurpleAccent(context).withValues(alpha: 0.5))
+                          : (isDark ? Colors.white12 : const Color(0xFFE2E8F0)),
+                    ),
+                  ),
+                  child: Column(
+                    children: [
+                      Row(
+                        children: [
+                          Icon(
+                            state.isAdaptiveThemeEnabled
+                                ? (state.isDaytimeNow ? Icons.wb_sunny : Icons.nightlight_round)
+                                : Icons.schedule,
+                            color: state.isAdaptiveThemeEnabled
+                                ? (state.isDaytimeNow ? SystemTheme.getGoldAccent(context) : SystemTheme.getPurpleAccent(context))
+                                : SystemTheme.getTextSecondary(context),
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  'SOLAR TIME SYNC PROTOCOL',
+                                  style: GoogleFonts.orbitron(
+                                    color: SystemTheme.getTextPrimary(context),
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '06:00 - 18:00 (Radiant Light) • 18:00 - 06:00 (Shadow Dark)',
+                                  style: GoogleFonts.rajdhani(
+                                    color: SystemTheme.getTextSecondary(context),
+                                    fontSize: 11,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Switch(
+                            value: state.isAdaptiveThemeEnabled,
+                            activeThumbColor: state.isDaytimeNow ? SystemTheme.getGoldAccent(context) : SystemTheme.getPurpleAccent(context),
+                            onChanged: (val) => state.setAdaptiveTheme(val),
+                          ),
+                        ],
+                      ),
+                      if (state.isAdaptiveThemeEnabled) ...[
+                        const SizedBox(height: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                          decoration: BoxDecoration(
+                            color: (state.isDaytimeNow ? SystemTheme.getGoldAccent(context) : SystemTheme.getPurpleAccent(context)).withValues(alpha: 0.12),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                state.isDaytimeNow ? Icons.wb_sunny_outlined : Icons.bedtime_outlined,
+                                size: 14,
+                                color: state.isDaytimeNow ? SystemTheme.getGoldAccent(context) : SystemTheme.getPurpleAccent(context),
+                              ),
+                              const SizedBox(width: 6),
+                              Text(
+                                state.isDaytimeNow
+                                    ? 'CURRENT PHASE: ☀️ DAYTIME DETECTED → RADIANT LIGHT HUD'
+                                    : 'CURRENT PHASE: 🌙 NIGHTTIME DETECTED → SHADOW MONARCH HUD',
+                                style: GoogleFonts.orbitron(
+                                  color: state.isDaytimeNow ? SystemTheme.getGoldAccent(context) : SystemTheme.getPurpleAccent(context),
+                                  fontSize: 9.5,
+                                  fontWeight: FontWeight.bold,
+                                  letterSpacing: 0.5,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
                 ),
               ],
             ),
@@ -624,14 +783,22 @@ class StatusScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: achievement.isUnlocked
               ? tierColor.withValues(alpha: isDark ? 0.08 : 0.12)
-              : (isDark ? Colors.black38 : const Color(0xFFF8FAFC)),
+              : (isDark ? Colors.black38 : Colors.white),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: achievement.isUnlocked
-                ? tierColor.withValues(alpha: isDark ? 0.5 : 0.6)
-                : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
-            width: achievement.isUnlocked ? 1.2 : 0.8,
+                ? tierColor.withValues(alpha: isDark ? 0.5 : 0.65)
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : SystemColors.lightPanelBorder),
+            width: achievement.isUnlocked ? 1.2 : 1.0,
           ),
+          boxShadow: [
+            if (!isDark)
+              const BoxShadow(
+                color: Color(0x060F172A),
+                blurRadius: 6,
+                offset: Offset(0, 2),
+              ),
+          ],
         ),
         child: Row(
           children: [

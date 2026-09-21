@@ -5,6 +5,8 @@ import 'package:habit_flow/main.dart';
 import 'package:habit_flow/models/quest_model.dart';
 import 'package:habit_flow/screens/weekly_report_screen.dart';
 import 'package:habit_flow/screens/progress_screen.dart';
+import 'package:habit_flow/screens/quest_screen.dart';
+import 'package:habit_flow/screens/status_screen.dart';
 import 'package:habit_flow/services/system_state.dart';
 import 'package:habit_flow/theme/system_theme.dart';
 import 'package:habit_flow/widgets/habit_day_tracker_grid.dart';
@@ -345,6 +347,44 @@ void main() {
     state.dispose();
   });
 
+  test('Solar Adaptive Theme: switches based on time of day and persists mode', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    expect(state.isAdaptiveThemeEnabled, false);
+
+    // Enable Adaptive Theme
+    state.setAdaptiveTheme(true);
+    expect(state.isAdaptiveThemeEnabled, true);
+
+    // Verify dynamic resolution matches isDaytimeNow
+    if (state.isDaytimeNow) {
+      expect(state.themeMode, ThemeMode.light);
+      expect(state.isDarkMode, false);
+    } else {
+      expect(state.themeMode, ThemeMode.dark);
+      expect(state.isDarkMode, true);
+    }
+
+    // Cycling theme mode
+    state.setThemeMode(ThemeMode.dark);
+    expect(state.isAdaptiveThemeEnabled, false);
+    expect(state.themeMode, ThemeMode.dark);
+
+    state.cycleThemeMode(); // Dark -> Light
+    expect(state.isAdaptiveThemeEnabled, false);
+    expect(state.themeMode, ThemeMode.light);
+
+    state.cycleThemeMode(); // Light -> Adaptive
+    expect(state.isAdaptiveThemeEnabled, true);
+
+    state.cycleThemeMode(); // Adaptive -> Dark
+    expect(state.isAdaptiveThemeEnabled, false);
+    expect(state.themeMode, ThemeMode.dark);
+
+    state.dispose();
+  });
+
   testWidgets('Weekly Performance Report: renders metrics, 7-day chart, and insights in both dark and light modes', (tester) async {
     late SystemState state;
     await tester.runAsync(() async {
@@ -473,4 +513,64 @@ void main() {
 
     state.dispose();
   });
+
+  testWidgets('Radiant Light Mode: QuestScreen renders with full HUD fidelity', (tester) async {
+    late SystemState state;
+    await tester.runAsync(() async {
+      state = SystemState();
+      await Future.delayed(const Duration(milliseconds: 50));
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: SystemTheme.lightTheme,
+        home: Scaffold(
+          body: QuestScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('TASKS • ${state.quests.length} PENDING', skipOffstage: false), findsOneWidget);
+    expect(find.text('NEW TASK', skipOffstage: false), findsOneWidget);
+
+    state.dispose();
+  });
+
+  testWidgets('StatusScreen: renders Theme Calibration cards and Solar Adaptive toggle', (tester) async {
+    late SystemState state;
+    await tester.runAsync(() async {
+      state = SystemState();
+      await Future.delayed(const Duration(milliseconds: 50));
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: SystemTheme.darkTheme,
+        home: Scaffold(
+          body: StatusScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('SYSTEM INTERFACE CALIBRATION', skipOffstage: false), findsOneWidget);
+    expect(find.text('SHADOW', skipOffstage: false), findsOneWidget);
+    expect(find.text('RADIANT', skipOffstage: false), findsOneWidget);
+    expect(find.text('ADAPTIVE', skipOffstage: false), findsOneWidget);
+    expect(find.text('SOLAR TIME SYNC PROTOCOL', skipOffstage: false), findsOneWidget);
+
+    // Turn on adaptive switch
+    final adaptiveSwitch = find.byType(Switch).last;
+    await tester.ensureVisible(adaptiveSwitch);
+    await tester.tap(adaptiveSwitch);
+    await tester.pumpAndSettle();
+
+    expect(state.isAdaptiveThemeEnabled, true);
+
+    state.dispose();
+  });
 }
+

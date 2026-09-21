@@ -145,14 +145,18 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
     );
     String? dialogError;
 
+    final accent = SystemTheme.getPrimaryAccent(context);
+    final textPrimary = SystemTheme.getTextPrimary(context);
+    final textSecondary = SystemTheme.getTextSecondary(context);
+
     showDialog(
       context: context,
       builder: (dialogCtx) => StatefulBuilder(
         builder: (ctx, setDialogState) => AlertDialog(
-          backgroundColor: SystemColors.panelBg,
+          backgroundColor: SystemTheme.getPanelBg(context),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(10),
-            side: const BorderSide(color: SystemColors.cyanGlow, width: 1.5),
+            side: BorderSide(color: accent, width: 1.5),
           ),
           title: Row(
             children: [
@@ -176,7 +180,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 child: Text(
                   'CONNECT GMAIL ACCOUNT',
                   style: GoogleFonts.orbitron(
-                    color: Colors.white,
+                    color: textPrimary,
                     fontSize: 13,
                     fontWeight: FontWeight.bold,
                   ),
@@ -192,7 +196,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 Text(
                   'Enter your Google / Gmail account to synchronize directly with the System:',
                   style: GoogleFonts.rajdhani(
-                    color: SystemColors.textSecondary,
+                    color: textSecondary,
                     fontSize: 13,
                   ),
                 ),
@@ -200,23 +204,23 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                 TextField(
                   controller: gmailCtrl,
                   keyboardType: TextInputType.emailAddress,
-                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15),
-                  decoration: const InputDecoration(
+                  style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 15),
+                  decoration: InputDecoration(
                     labelText: 'Gmail Address',
                     hintText: 'hunter@gmail.com',
-                    prefixIcon: Icon(Icons.email_outlined, color: SystemColors.cyanGlow, size: 18),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    prefixIcon: Icon(Icons.email_outlined, color: accent, size: 18),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
                 const SizedBox(height: 12),
                 TextField(
                   controller: nameCtrl,
-                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15),
-                  decoration: const InputDecoration(
+                  style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 15),
+                  decoration: InputDecoration(
                     labelText: 'Hunter Name (Optional)',
                     hintText: 'Sung Jin-Woo',
-                    prefixIcon: Icon(Icons.badge_outlined, color: SystemColors.cyanGlow, size: 18),
-                    contentPadding: EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    prefixIcon: Icon(Icons.badge_outlined, color: accent, size: 18),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   ),
                 ),
                 if (dialogError != null) ...[
@@ -224,7 +228,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   Text(
                     dialogError!,
                     style: GoogleFonts.rajdhani(
-                      color: SystemColors.crimsonGlow,
+                      color: SystemTheme.getCrimsonAccent(context),
                       fontSize: 12,
                       fontWeight: FontWeight.w600,
                     ),
@@ -238,13 +242,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
               onPressed: () => Navigator.of(dialogCtx).pop(),
               child: Text(
                 'CANCEL',
-                style: GoogleFonts.orbitron(color: Colors.white60, fontSize: 11),
+                style: GoogleFonts.orbitron(color: textSecondary, fontSize: 11),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: SystemColors.cyanGlow,
-                foregroundColor: Colors.black,
+                backgroundColor: accent,
+                foregroundColor: Colors.white,
               ),
               onPressed: () async {
                 final emailText = gmailCtrl.text.trim();
@@ -290,9 +294,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
   Widget build(BuildContext context) {
     final state = widget.state;
     final registeredAccounts = state.accounts;
+    final isDark = SystemTheme.isDark(context);
+    final accent = SystemTheme.getPrimaryAccent(context);
+    final textPrimary = SystemTheme.getTextPrimary(context);
+    final textSecondary = SystemTheme.getTextSecondary(context);
 
     return Scaffold(
-      backgroundColor: SystemColors.background,
+      backgroundColor: SystemTheme.getBackground(context),
       body: SafeArea(
         child: Center(
           child: SingleChildScrollView(
@@ -310,17 +318,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       height: 64,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: SystemColors.cyanGlow.withValues(alpha: 0.12),
-                        border: Border.all(color: SystemColors.cyanGlow, width: 2),
+                        color: accent.withValues(alpha: isDark ? 0.12 : 0.1),
+                        border: Border.all(color: accent, width: 2),
                         boxShadow: [
                           BoxShadow(
-                            color: SystemColors.cyanGlow.withValues(alpha: 0.4),
+                            color: accent.withValues(alpha: isDark ? 0.4 : 0.2),
                             blurRadius: 20,
                           ),
                         ],
                       ),
-                      child: const Center(
-                        child: Icon(Icons.shield_outlined, color: SystemColors.cyanGlow, size: 32),
+                      child: Center(
+                        child: Icon(Icons.shield_outlined, color: accent, size: 32),
                       ),
                     ),
                   ),
@@ -331,7 +339,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     child: Text(
                       'THE SYSTEM',
                       style: GoogleFonts.orbitron(
-                        color: SystemColors.cyanGlow,
+                        color: accent,
                         fontSize: 13,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 4.0,
@@ -343,7 +351,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     child: Text(
                       'HUNTER IDENTIFICATION',
                       style: GoogleFonts.orbitron(
-                        color: Colors.white,
+                        color: textPrimary,
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 1.5,
@@ -356,7 +364,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       'Synchronize protocol progress across Google, Gmail, or Guest mode.',
                       textAlign: TextAlign.center,
                       style: GoogleFonts.rajdhani(
-                        color: SystemColors.textSecondary,
+                        color: textSecondary,
                         fontSize: 13,
                         fontWeight: FontWeight.w500,
                       ),
@@ -370,18 +378,18 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                       margin: const EdgeInsets.only(bottom: 14),
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: SystemColors.crimsonGlow.withValues(alpha: 0.15),
+                        color: SystemTheme.getCrimsonAccent(context).withValues(alpha: 0.15),
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: SystemColors.crimsonGlow, width: 1),
+                        border: Border.all(color: SystemTheme.getCrimsonAccent(context), width: 1),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.error_outline, color: SystemColors.crimsonGlow, size: 18),
+                          Icon(Icons.error_outline, color: SystemTheme.getCrimsonAccent(context), size: 18),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
                               _errorMessage!,
-                              style: GoogleFonts.rajdhani(color: SystemColors.crimsonGlow, fontSize: 13, fontWeight: FontWeight.bold),
+                              style: GoogleFonts.rajdhani(color: SystemTheme.getCrimsonAccent(context), fontSize: 13, fontWeight: FontWeight.bold),
                             ),
                           ),
                         ],
@@ -391,14 +399,20 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   // Main Card Container with Holographic Tabs
                   Container(
                     decoration: BoxDecoration(
-                      color: SystemColors.panelBg,
+                      color: SystemTheme.getPanelBg(context),
                       borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: SystemColors.cyanGlow.withValues(alpha: 0.4), width: 1.2),
+                      border: Border.all(color: accent.withValues(alpha: isDark ? 0.4 : 0.5), width: 1.2),
                       boxShadow: [
                         BoxShadow(
-                          color: SystemColors.cyanGlow.withValues(alpha: 0.1),
+                          color: accent.withValues(alpha: isDark ? 0.1 : 0.08),
                           blurRadius: 16,
                         ),
+                        if (!isDark)
+                          const BoxShadow(
+                            color: Color(0x0A0F172A),
+                            blurRadius: 12,
+                            offset: Offset(0, 3),
+                          ),
                       ],
                     ),
                     child: Column(
@@ -406,10 +420,10 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                         // Tab Selector (Sign In vs Register)
                         TabBar(
                           controller: _tabController,
-                          indicatorColor: SystemColors.cyanGlow,
+                          indicatorColor: accent,
                           indicatorWeight: 3,
-                          labelColor: SystemColors.cyanGlow,
-                          unselectedLabelColor: Colors.white54,
+                          labelColor: accent,
+                          unselectedLabelColor: isDark ? Colors.white54 : SystemTheme.getTextMuted(context),
                           labelStyle: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold, letterSpacing: 1.0),
                           tabs: const [
                             Tab(text: 'SIGN IN'),
@@ -431,11 +445,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                   children: [
                                     TextField(
                                       controller: _signInEmailCtrl,
-                                      style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15),
+                                      style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 15),
                                       decoration: InputDecoration(
                                         labelText: 'Gmail / Email Address',
                                         hintText: 'e.g. yourname@gmail.com',
-                                        prefixIcon: const Icon(Icons.email_outlined, color: SystemColors.cyanGlow, size: 18),
+                                        prefixIcon: Icon(Icons.email_outlined, color: accent, size: 18),
                                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                                       ),
                                     ),
@@ -443,12 +457,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                     TextField(
                                       controller: _signInPassCtrl,
                                       obscureText: _obscureSignInPass,
-                                      style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15),
+                                      style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 15),
                                       decoration: InputDecoration(
                                         labelText: 'Hunter Passcode',
-                                        prefixIcon: const Icon(Icons.lock_outline, color: SystemColors.cyanGlow, size: 18),
+                                        prefixIcon: Icon(Icons.lock_outline, color: accent, size: 18),
                                         suffixIcon: IconButton(
-                                          icon: Icon(_obscureSignInPass ? Icons.visibility_off : Icons.visibility, color: Colors.white38, size: 18),
+                                          icon: Icon(_obscureSignInPass ? Icons.visibility_off : Icons.visibility, color: SystemTheme.getTextMuted(context), size: 18),
                                           onPressed: () => setState(() => _obscureSignInPass = !_obscureSignInPass),
                                         ),
                                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
@@ -468,7 +482,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                           padding: const EdgeInsets.symmetric(vertical: 2.0),
                                           child: Text(
                                             '⚡ Fill Demo (monarch@hunter.system)',
-                                            style: GoogleFonts.rajdhani(color: SystemColors.cyanGlow, fontSize: 12, fontWeight: FontWeight.bold),
+                                            style: GoogleFonts.rajdhani(color: accent, fontSize: 12, fontWeight: FontWeight.bold),
                                           ),
                                         ),
                                       ),
@@ -478,13 +492,13 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                       width: double.infinity,
                                       child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: SystemColors.cyanGlow,
-                                          foregroundColor: Colors.black,
+                                          backgroundColor: accent,
+                                          foregroundColor: Colors.white,
                                           padding: const EdgeInsets.symmetric(vertical: 12),
                                         ),
                                         onPressed: _isLoading ? null : _handleSignIn,
                                         child: _isLoading
-                                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.white))
                                             : Text('AUTHENTICATE & ENTER', style: GoogleFonts.orbitron(fontSize: 12, fontWeight: FontWeight.bold)),
                                       ),
                                     ),
@@ -497,21 +511,21 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                   children: [
                                     TextField(
                                       controller: _signUpNameCtrl,
-                                      style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15),
+                                      style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 15),
                                       decoration: InputDecoration(
                                         labelText: 'Hunter Codename (e.g. Sung Jin-Woo)',
-                                        prefixIcon: const Icon(Icons.badge_outlined, color: SystemColors.cyanGlow, size: 18),
+                                        prefixIcon: Icon(Icons.badge_outlined, color: accent, size: 18),
                                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                       ),
                                     ),
                                     const SizedBox(height: 8),
                                     TextField(
                                       controller: _signUpEmailCtrl,
-                                      style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15),
+                                      style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 15),
                                       decoration: InputDecoration(
                                         labelText: 'Gmail / Email Address',
                                         hintText: 'e.g. yourname@gmail.com',
-                                        prefixIcon: const Icon(Icons.email_outlined, color: SystemColors.cyanGlow, size: 18),
+                                        prefixIcon: Icon(Icons.email_outlined, color: accent, size: 18),
                                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                       ),
                                     ),
@@ -519,12 +533,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                     TextField(
                                       controller: _signUpPassCtrl,
                                       obscureText: _obscureSignUpPass,
-                                      style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 15),
+                                      style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 15),
                                       decoration: InputDecoration(
                                         labelText: 'Security Passcode (min 4 chars)',
-                                        prefixIcon: const Icon(Icons.lock_outline, color: SystemColors.cyanGlow, size: 18),
+                                        prefixIcon: Icon(Icons.lock_outline, color: accent, size: 18),
                                         suffixIcon: IconButton(
-                                          icon: Icon(_obscureSignUpPass ? Icons.visibility_off : Icons.visibility, color: Colors.white38, size: 18),
+                                          icon: Icon(_obscureSignUpPass ? Icons.visibility_off : Icons.visibility, color: SystemTheme.getTextMuted(context), size: 18),
                                           onPressed: () => setState(() => _obscureSignUpPass = !_obscureSignUpPass),
                                         ),
                                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -535,7 +549,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                       width: double.infinity,
                                       child: ElevatedButton(
                                         style: ElevatedButton.styleFrom(
-                                          backgroundColor: SystemColors.monarchViolet,
+                                          backgroundColor: SystemTheme.getPurpleAccent(context),
                                           foregroundColor: Colors.white,
                                           padding: const EdgeInsets.symmetric(vertical: 12),
                                         ),
@@ -559,12 +573,12 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   // Divider OR
                   Row(
                     children: [
-                      const Expanded(child: Divider(color: Colors.white24)),
+                      Expanded(child: Divider(color: SystemTheme.getPanelBorder(context))),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 12),
-                        child: Text('OR CONNECT VIA', style: GoogleFonts.orbitron(color: Colors.white38, fontSize: 10, fontWeight: FontWeight.bold)),
+                        child: Text('OR CONNECT VIA', style: GoogleFonts.orbitron(color: SystemTheme.getTextMuted(context), fontSize: 10, fontWeight: FontWeight.bold)),
                       ),
-                      const Expanded(child: Divider(color: Colors.white24)),
+                      Expanded(child: Divider(color: SystemTheme.getPanelBorder(context))),
                     ],
                   ),
                   const SizedBox(height: 14),
@@ -576,9 +590,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     child: Container(
                       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.08),
+                        color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.white,
                         borderRadius: BorderRadius.circular(6),
-                        border: Border.all(color: Colors.white30, width: 1.0),
+                        border: Border.all(color: isDark ? Colors.white30 : SystemColors.lightPanelBorder, width: 1.0),
+                        boxShadow: [
+                          if (!isDark)
+                            const BoxShadow(
+                              color: Color(0x0A0F172A),
+                              blurRadius: 8,
+                              offset: Offset(0, 2),
+                            ),
+                        ],
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.center,
@@ -595,7 +617,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           Text(
                             'CONTINUE WITH GOOGLE',
                             style: GoogleFonts.orbitron(
-                              color: Colors.white,
+                              color: textPrimary,
                               fontSize: 12,
                               fontWeight: FontWeight.bold,
                               letterSpacing: 0.8,
@@ -609,11 +631,11 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   Center(
                     child: TextButton.icon(
                       onPressed: _isLoading ? null : _promptGmailConnectDialog,
-                      icon: const Icon(Icons.alternate_email, color: SystemColors.cyanGlow, size: 14),
+                      icon: Icon(Icons.alternate_email, color: accent, size: 14),
                       label: Text(
                         'ENTER GMAIL DIRECTLY',
                         style: GoogleFonts.orbitron(
-                          color: SystemColors.cyanGlow,
+                          color: accent,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 0.8,
@@ -626,15 +648,15 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                   // Guest Awakening Button
                   OutlinedButton.icon(
                     style: OutlinedButton.styleFrom(
-                      side: BorderSide(color: SystemColors.hpGreen.withValues(alpha: 0.6), width: 1.2),
+                      side: BorderSide(color: SystemTheme.getGreenAccent(context).withValues(alpha: 0.7), width: 1.2),
                       padding: const EdgeInsets.symmetric(vertical: 12),
                     ),
                     onPressed: () => widget.state.signInAsGuest(),
-                    icon: const Icon(Icons.person_outline, color: SystemColors.hpGreen, size: 18),
+                    icon: Icon(Icons.person_outline, color: SystemTheme.getGreenAccent(context), size: 18),
                     label: Text(
                       'ENTER AS GUEST HUNTER',
                       style: GoogleFonts.orbitron(
-                        color: SystemColors.hpGreen,
+                        color: SystemTheme.getGreenAccent(context),
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 0.8,
@@ -647,7 +669,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                     const SizedBox(height: 20),
                     Text(
                       'SAVED HUNTER IDENTITIES ON THIS DEVICE:',
-                      style: GoogleFonts.orbitron(color: SystemColors.textMuted, fontSize: 10, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.orbitron(color: SystemTheme.getTextMuted(context), fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 8),
                     Wrap(
@@ -660,9 +682,17 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                           child: Container(
                             padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                             decoration: BoxDecoration(
-                              color: Colors.black45,
+                              color: isDark ? Colors.black45 : Colors.white,
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: SystemColors.cyanGlow.withValues(alpha: 0.3)),
+                              border: Border.all(color: accent.withValues(alpha: isDark ? 0.3 : 0.5)),
+                              boxShadow: [
+                                if (!isDark)
+                                  const BoxShadow(
+                                    color: Color(0x060F172A),
+                                    blurRadius: 4,
+                                    offset: Offset(0, 1),
+                                  ),
+                              ],
                             ),
                             child: Row(
                               mainAxisSize: MainAxisSize.min,
@@ -671,7 +701,7 @@ class _AuthScreenState extends State<AuthScreen> with SingleTickerProviderStateM
                                 const SizedBox(width: 6),
                                 Text(
                                   acc.displayName,
-                                  style: GoogleFonts.rajdhani(color: Colors.white70, fontSize: 12, fontWeight: FontWeight.bold),
+                                  style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 12, fontWeight: FontWeight.bold),
                                 ),
                               ],
                             ),
