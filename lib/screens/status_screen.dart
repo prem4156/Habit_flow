@@ -6,6 +6,7 @@ import '../services/system_state.dart';
 import '../theme/system_theme.dart';
 import '../widgets/stat_row.dart';
 import '../widgets/system_window.dart';
+import '../widgets/alarm_settings_widget.dart';
 
 class StatusScreen extends StatelessWidget {
   final SystemState state;
@@ -13,6 +14,11 @@ class StatusScreen extends StatelessWidget {
   const StatusScreen({super.key, required this.state});
 
   void _showEditProfileDialog(BuildContext context) {
+    final isDark = SystemTheme.isDark(context);
+    final accent = SystemTheme.getPrimaryAccent(context);
+    final textPrimary = SystemTheme.getTextPrimary(context);
+    final textSecondary = SystemTheme.getTextSecondary(context);
+
     final nameCtrl = TextEditingController(text: state.profile.name);
     final titleCtrl = TextEditingController(text: state.profile.title);
     final jobCtrl = TextEditingController(text: state.profile.job);
@@ -20,15 +26,15 @@ class StatusScreen extends StatelessWidget {
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: SystemColors.panelBg,
+        backgroundColor: SystemTheme.getPanelBg(context),
         shape: RoundedRectangleBorder(
-          side: const BorderSide(color: SystemColors.cyanGlow, width: 1.5),
+          side: BorderSide(color: accent, width: 1.5),
           borderRadius: BorderRadius.circular(8),
         ),
         title: Text(
           'UPDATE HUNTER DOSSIER',
           style: GoogleFonts.orbitron(
-            color: SystemColors.cyanGlow,
+            color: accent,
             fontSize: 15,
             fontWeight: FontWeight.bold,
           ),
@@ -36,11 +42,11 @@ class StatusScreen extends StatelessWidget {
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildDialogField(nameCtrl, 'Hunter Name'),
+            _buildDialogField(nameCtrl, 'Hunter Name', textPrimary, accent, isDark),
             const SizedBox(height: 12),
-            _buildDialogField(titleCtrl, 'Hunter Title'),
+            _buildDialogField(titleCtrl, 'Hunter Title', textPrimary, accent, isDark),
             const SizedBox(height: 12),
-            _buildDialogField(jobCtrl, 'Job / Class'),
+            _buildDialogField(jobCtrl, 'Job / Class', textPrimary, accent, isDark),
           ],
         ),
         actions: [
@@ -48,13 +54,13 @@ class StatusScreen extends StatelessWidget {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'CANCEL',
-              style: GoogleFonts.orbitron(color: Colors.white60),
+              style: GoogleFonts.orbitron(color: textSecondary),
             ),
           ),
           ElevatedButton(
             style: ElevatedButton.styleFrom(
-              backgroundColor: SystemColors.cyanGlow,
-              foregroundColor: Colors.black,
+              backgroundColor: accent,
+              foregroundColor: Colors.white,
             ),
             onPressed: () {
               state.updateHunterDetails(
@@ -74,21 +80,29 @@ class StatusScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildDialogField(TextEditingController ctrl, String label) {
+  Widget _buildDialogField(
+    TextEditingController ctrl,
+    String label,
+    Color textPrimary,
+    Color accent,
+    bool isDark,
+  ) {
     return TextField(
       controller: ctrl,
-      style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 16),
+      style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 16),
       decoration: InputDecoration(
         labelText: label,
-        labelStyle: GoogleFonts.rajdhani(color: SystemColors.cyanGlow),
+        labelStyle: GoogleFonts.rajdhani(color: accent),
         enabledBorder: OutlineInputBorder(
-          borderSide: BorderSide(color: SystemColors.cyanGlow.withValues(alpha: 0.4)),
+          borderSide: BorderSide(
+            color: isDark ? accent.withValues(alpha: 0.4) : SystemColors.lightPanelBorder,
+          ),
         ),
-        focusedBorder: const OutlineInputBorder(
-          borderSide: BorderSide(color: SystemColors.cyanGlow),
+        focusedBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: accent, width: 1.5),
         ),
         filled: true,
-        fillColor: Colors.black45,
+        fillColor: isDark ? Colors.black45 : const Color(0xFFF1F5F9),
       ),
     );
   }
@@ -97,6 +111,11 @@ class StatusScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final profile = state.profile;
     final expRatio = profile.maxExp > 0 ? (profile.exp / profile.maxExp).clamp(0.0, 1.0) : 0.0;
+    final isDark = SystemTheme.isDark(context);
+    final accent = SystemTheme.getPrimaryAccent(context);
+    final textPrimary = SystemTheme.getTextPrimary(context);
+    final textSecondary = SystemTheme.getTextSecondary(context);
+    final textMuted = SystemTheme.getTextMuted(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
@@ -107,7 +126,7 @@ class StatusScreen extends StatelessWidget {
           SystemWindow(
             title: 'Hunter Dossier',
             trailing: IconButton(
-              icon: const Icon(Icons.edit, color: SystemColors.cyanGlow, size: 18),
+              icon: Icon(Icons.edit, color: accent, size: 18),
               onPressed: () => _showEditProfileDialog(context),
               tooltip: 'Edit Hunter Details',
             ),
@@ -118,12 +137,12 @@ class StatusScreen extends StatelessWidget {
                   width: 72,
                   height: 72,
                   decoration: BoxDecoration(
-                    color: SystemColors.darkBlue,
+                    color: isDark ? SystemColors.darkBlue : const Color(0xFFE0F2FE),
                     shape: BoxShape.circle,
-                    border: Border.all(color: SystemColors.cyanGlow, width: 2),
+                    border: Border.all(color: accent, width: 2),
                     boxShadow: [
                       BoxShadow(
-                        color: SystemColors.cyanGlow.withValues(alpha: 0.35),
+                        color: accent.withValues(alpha: isDark ? 0.35 : 0.2),
                         blurRadius: 14,
                         spreadRadius: 2,
                       ),
@@ -136,7 +155,7 @@ class StatusScreen extends StatelessWidget {
                         Text(
                           profile.rank.label.split('-')[0],
                           style: GoogleFonts.orbitron(
-                            color: SystemColors.cyanGlow,
+                            color: accent,
                             fontSize: 24,
                             fontWeight: FontWeight.w900,
                           ),
@@ -144,7 +163,7 @@ class StatusScreen extends StatelessWidget {
                         Text(
                           'RANK',
                           style: GoogleFonts.orbitron(
-                            color: SystemColors.textSecondary,
+                            color: textSecondary,
                             fontSize: 8,
                             fontWeight: FontWeight.bold,
                           ),
@@ -162,7 +181,7 @@ class StatusScreen extends StatelessWidget {
                       Text(
                         profile.name.toUpperCase(),
                         style: GoogleFonts.orbitron(
-                          color: SystemColors.textPrimary,
+                          color: textPrimary,
                           fontSize: 18,
                           fontWeight: FontWeight.bold,
                           letterSpacing: 1.2,
@@ -174,14 +193,14 @@ class StatusScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                             decoration: BoxDecoration(
-                              color: SystemColors.cyanGlow.withValues(alpha: 0.15),
+                              color: accent.withValues(alpha: isDark ? 0.15 : 0.1),
                               borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: SystemColors.cyanGlow.withValues(alpha: 0.4)),
+                              border: Border.all(color: accent.withValues(alpha: isDark ? 0.4 : 0.5)),
                             ),
                             child: Text(
                               profile.title,
                               style: GoogleFonts.rajdhani(
-                                color: SystemColors.cyanGlow,
+                                color: accent,
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -191,7 +210,7 @@ class StatusScreen extends StatelessWidget {
                           Text(
                             'Job: ${profile.job}',
                             style: GoogleFonts.rajdhani(
-                              color: SystemColors.textSecondary,
+                              color: textSecondary,
                               fontSize: 13,
                               fontWeight: FontWeight.w600,
                             ),
@@ -202,7 +221,7 @@ class StatusScreen extends StatelessWidget {
                       Text(
                         profile.rank.description,
                         style: GoogleFonts.rajdhani(
-                          color: SystemColors.textMuted,
+                          color: textMuted,
                           fontSize: 12,
                         ),
                       ),
@@ -225,7 +244,7 @@ class StatusScreen extends StatelessWidget {
                     Text(
                       'LEVEL ${profile.level}',
                       style: GoogleFonts.orbitron(
-                        color: SystemColors.cyanGlow,
+                        color: accent,
                         fontSize: 22,
                         fontWeight: FontWeight.w900,
                         letterSpacing: 1.5,
@@ -234,7 +253,7 @@ class StatusScreen extends StatelessWidget {
                     Text(
                       '${profile.exp} / ${profile.maxExp} EXP',
                       style: GoogleFonts.orbitron(
-                        color: SystemColors.textSecondary,
+                        color: textSecondary,
                         fontSize: 12,
                         fontWeight: FontWeight.w600,
                       ),
@@ -247,8 +266,8 @@ class StatusScreen extends StatelessWidget {
                   child: LinearProgressIndicator(
                     value: expRatio,
                     minHeight: 10,
-                    backgroundColor: Colors.black54,
-                    valueColor: const AlwaysStoppedAnimation<Color>(SystemColors.cyanGlow),
+                    backgroundColor: SystemTheme.getProgressTrack(context),
+                    valueColor: AlwaysStoppedAnimation<Color>(accent),
                   ),
                 ),
                 const SizedBox(height: 12),
@@ -258,19 +277,19 @@ class StatusScreen extends StatelessWidget {
                     Text(
                       'Daily Habits Cleared: ${state.completedDailyCount} / ${state.totalDailyCount}',
                       style: GoogleFonts.rajdhani(
-                        color: SystemColors.textSecondary,
+                        color: textSecondary,
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                       ),
                     ),
                     Row(
                       children: [
-                        const Icon(Icons.check_circle, color: SystemColors.cyanGlow, size: 16),
+                        Icon(Icons.check_circle, color: accent, size: 16),
                         const SizedBox(width: 4),
                         Text(
                           '${state.totalQuestClears} Tasks Cleared',
                           style: GoogleFonts.orbitron(
-                            color: SystemColors.cyanGlow,
+                            color: accent,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -289,14 +308,14 @@ class StatusScreen extends StatelessWidget {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
               decoration: BoxDecoration(
-                color: SystemColors.cyanGlow.withValues(alpha: 0.15),
+                color: accent.withValues(alpha: isDark ? 0.15 : 0.1),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: SystemColors.cyanGlow, width: 0.8),
+                border: Border.all(color: accent.withValues(alpha: isDark ? 0.8 : 0.5), width: 0.8),
               ),
               child: Text(
                 'TASK-FORGED',
                 style: GoogleFonts.orbitron(
-                  color: SystemColors.cyanGlow,
+                  color: accent,
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
                   letterSpacing: 1.0,
@@ -309,19 +328,21 @@ class StatusScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   margin: const EdgeInsets.only(bottom: 10.0),
                   decoration: BoxDecoration(
-                    color: Colors.black45,
+                    color: isDark ? Colors.black45 : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: SystemColors.cyanGlow.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: isDark ? accent.withValues(alpha: 0.3) : SystemColors.lightPanelBorder,
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.fitness_center, color: SystemColors.cyanGlow, size: 14),
+                      Icon(Icons.fitness_center, color: accent, size: 14),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'SYSTEM LAW: Attributes elevate automatically upon clearing daily tasks.',
                           style: GoogleFonts.rajdhani(
-                            color: SystemColors.textSecondary,
+                            color: textSecondary,
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -365,14 +386,14 @@ class StatusScreen extends StatelessWidget {
             trailing: Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
               decoration: BoxDecoration(
-                color: SystemColors.purpleShadow.withValues(alpha: 0.15),
+                color: SystemTheme.getPurpleAccent(context).withValues(alpha: 0.15),
                 borderRadius: BorderRadius.circular(4),
-                border: Border.all(color: SystemColors.purpleShadow, width: 0.8),
+                border: Border.all(color: SystemTheme.getPurpleAccent(context), width: 0.8),
               ),
               child: Text(
                 '${state.achievements.where((a) => a.isUnlocked).length}/${state.achievements.length}',
                 style: GoogleFonts.orbitron(
-                  color: SystemColors.purpleShadow,
+                  color: SystemTheme.getPurpleAccent(context),
                   fontWeight: FontWeight.bold,
                   fontSize: 11,
                 ),
@@ -380,7 +401,7 @@ class StatusScreen extends StatelessWidget {
             ),
             child: Column(
               children: [
-                ...state.achievements.map((achievement) => _buildAchievementRow(achievement)),
+                ...state.achievements.map((achievement) => _buildAchievementRow(context, achievement)),
               ],
             ),
           ),
@@ -395,19 +416,21 @@ class StatusScreen extends StatelessWidget {
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   margin: const EdgeInsets.only(bottom: 10.0),
                   decoration: BoxDecoration(
-                    color: Colors.black45,
+                    color: isDark ? Colors.black45 : const Color(0xFFF1F5F9),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: SystemColors.cyanGlow.withValues(alpha: 0.3)),
+                    border: Border.all(
+                      color: SystemTheme.getPrimaryAccent(context).withValues(alpha: 0.3),
+                    ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.auto_awesome, color: SystemColors.cyanGlow, size: 14),
+                      Icon(Icons.auto_awesome, color: SystemTheme.getPrimaryAccent(context), size: 14),
                       const SizedBox(width: 8),
                       Expanded(
                         child: Text(
                           'The System monitors your discipline autonomously. Emergency Quests and Achievements may trigger at any time.',
                           style: GoogleFonts.rajdhani(
-                            color: SystemColors.textSecondary,
+                            color: SystemTheme.getTextSecondary(context),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                           ),
@@ -425,7 +448,7 @@ class StatusScreen extends StatelessWidget {
                         Text(
                           'Consecutive Perfect Days: ${state.consecutivePerfectDays}',
                           style: GoogleFonts.rajdhani(
-                            color: SystemColors.textSecondary,
+                            color: SystemTheme.getTextSecondary(context),
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -433,7 +456,7 @@ class StatusScreen extends StatelessWidget {
                         Text(
                           'Total Tasks Cleared: ${state.totalQuestClears}',
                           style: GoogleFonts.rajdhani(
-                            color: SystemColors.textSecondary,
+                            color: SystemTheme.getTextSecondary(context),
                             fontSize: 13,
                             fontWeight: FontWeight.w600,
                           ),
@@ -451,7 +474,7 @@ class StatusScreen extends StatelessWidget {
                         ),
                       ),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: SystemColors.crimsonGlow,
+                        backgroundColor: SystemTheme.getCrimsonAccent(context),
                         foregroundColor: Colors.white,
                         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       ),
@@ -461,6 +484,9 @@ class StatusScreen extends StatelessWidget {
               ],
             ),
           ),
+          // Daily Quest Alarm Settings
+          AlarmSettingsWidget(state: state),
+
           // System Theme Calibration (Dark / Light)
           SystemWindow(
             title: 'System Interface Calibration',
@@ -478,10 +504,12 @@ class StatusScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: state.isDarkMode
                                 ? SystemColors.monarchDark.withValues(alpha: 0.8)
-                                : (SystemTheme.isDark(context) ? Colors.black26 : const Color(0xFFE2E8F0)),
+                                : (isDark ? Colors.black26 : const Color(0xFFF1F5F9)),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: state.isDarkMode ? SystemColors.cyanGlow : Colors.transparent,
+                              color: state.isDarkMode
+                                  ? SystemColors.cyanGlow
+                                  : (isDark ? Colors.transparent : const Color(0xFFE2E8F0)),
                               width: 1.5,
                             ),
                           ),
@@ -523,10 +551,12 @@ class StatusScreen extends StatelessWidget {
                           decoration: BoxDecoration(
                             color: !state.isDarkMode
                                 ? SystemColors.lightCyanGlow.withValues(alpha: 0.15)
-                                : (SystemTheme.isDark(context) ? Colors.black26 : const Color(0xFFE2E8F0)),
+                                : (isDark ? Colors.black26 : const Color(0xFFF1F5F9)),
                             borderRadius: BorderRadius.circular(8),
                             border: Border.all(
-                              color: !state.isDarkMode ? SystemColors.lightCyanGlow : Colors.transparent,
+                              color: !state.isDarkMode
+                                  ? SystemColors.lightCyanGlow
+                                  : (isDark ? Colors.transparent : const Color(0xFFE2E8F0)),
                               width: 1.5,
                             ),
                           ),
@@ -534,7 +564,7 @@ class StatusScreen extends StatelessWidget {
                             children: [
                               Icon(
                                 Icons.light_mode,
-                                color: !state.isDarkMode ? SystemColors.goldAccent : SystemTheme.getTextMuted(context),
+                                color: !state.isDarkMode ? SystemTheme.getGoldAccent(context) : SystemTheme.getTextMuted(context),
                                 size: 24,
                               ),
                               const SizedBox(height: 6),
@@ -569,20 +599,21 @@ class StatusScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildAchievementRow(Achievement achievement) {
+  Widget _buildAchievementRow(BuildContext context, Achievement achievement) {
+    final isDark = SystemTheme.isDark(context);
     Color tierColor;
     switch (achievement.tier) {
       case AchievementTier.bronze:
-        tierColor = const Color(0xFFCD7F32);
+        tierColor = isDark ? const Color(0xFFCD7F32) : const Color(0xFFB45309);
         break;
       case AchievementTier.silver:
-        tierColor = const Color(0xFFC0C0C0);
+        tierColor = isDark ? const Color(0xFFC0C0C0) : const Color(0xFF64748B);
         break;
       case AchievementTier.gold:
-        tierColor = SystemColors.goldAccent;
+        tierColor = SystemTheme.getGoldAccent(context);
         break;
       case AchievementTier.legendary:
-        tierColor = SystemColors.purpleShadow;
+        tierColor = SystemTheme.getPurpleAccent(context);
         break;
     }
 
@@ -592,13 +623,13 @@ class StatusScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: achievement.isUnlocked
-              ? tierColor.withValues(alpha: 0.08)
-              : Colors.black38,
+              ? tierColor.withValues(alpha: isDark ? 0.08 : 0.12)
+              : (isDark ? Colors.black38 : const Color(0xFFF8FAFC)),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: achievement.isUnlocked
-                ? tierColor.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.1),
+                ? tierColor.withValues(alpha: isDark ? 0.5 : 0.6)
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
             width: achievement.isUnlocked ? 1.2 : 0.8,
           ),
         ),
@@ -611,10 +642,12 @@ class StatusScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: achievement.isUnlocked
-                    ? tierColor.withValues(alpha: 0.2)
-                    : Colors.black45,
+                    ? tierColor.withValues(alpha: isDark ? 0.2 : 0.15)
+                    : (isDark ? Colors.black45 : const Color(0xFFE2E8F0)),
                 border: Border.all(
-                  color: achievement.isUnlocked ? tierColor : Colors.white24,
+                  color: achievement.isUnlocked
+                      ? tierColor
+                      : (isDark ? Colors.white24 : const Color(0xFFCBD5E1)),
                   width: 1.5,
                 ),
               ),
@@ -623,7 +656,9 @@ class StatusScreen extends StatelessWidget {
                   achievement.isUnlocked ? achievement.badge : '?',
                   style: TextStyle(
                     fontSize: achievement.isUnlocked ? 18 : 16,
-                    color: achievement.isUnlocked ? null : Colors.white24,
+                    color: achievement.isUnlocked
+                        ? null
+                        : (isDark ? Colors.white24 : const Color(0xFF94A3B8)),
                   ),
                 ),
               ),
@@ -637,7 +672,7 @@ class StatusScreen extends StatelessWidget {
                   Text(
                     achievement.title,
                     style: GoogleFonts.orbitron(
-                      color: achievement.isUnlocked ? tierColor : Colors.white38,
+                      color: achievement.isUnlocked ? tierColor : SystemTheme.getTextMuted(context),
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.8,
@@ -648,8 +683,8 @@ class StatusScreen extends StatelessWidget {
                     achievement.description,
                     style: GoogleFonts.rajdhani(
                       color: achievement.isUnlocked
-                          ? SystemColors.textSecondary
-                          : SystemColors.textMuted,
+                          ? SystemTheme.getTextSecondary(context)
+                          : SystemTheme.getTextMuted(context),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -661,16 +696,16 @@ class StatusScreen extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: achievement.progress,
                         minHeight: 4,
-                        backgroundColor: Colors.black45,
+                        backgroundColor: SystemTheme.getProgressTrack(context),
                         valueColor: AlwaysStoppedAnimation<Color>(
-                            tierColor.withValues(alpha: 0.6)),
+                            tierColor.withValues(alpha: isDark ? 0.6 : 0.8)),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${achievement.currentProgress} / ${achievement.maxProgress}',
                       style: GoogleFonts.orbitron(
-                        color: SystemColors.textMuted,
+                        color: SystemTheme.getTextMuted(context),
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
                       ),
@@ -682,7 +717,9 @@ class StatusScreen extends StatelessWidget {
             // Status icon
             Icon(
               achievement.isUnlocked ? Icons.check_circle : Icons.lock_outline,
-              color: achievement.isUnlocked ? tierColor : Colors.white24,
+              color: achievement.isUnlocked
+                  ? tierColor
+                  : (isDark ? Colors.white24 : const Color(0xFF94A3B8)),
               size: 20,
             ),
           ],

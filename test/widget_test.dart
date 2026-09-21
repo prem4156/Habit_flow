@@ -3,8 +3,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:habit_flow/main.dart';
 import 'package:habit_flow/models/quest_model.dart';
+import 'package:habit_flow/screens/weekly_report_screen.dart';
+import 'package:habit_flow/screens/progress_screen.dart';
 import 'package:habit_flow/services/system_state.dart';
+import 'package:habit_flow/theme/system_theme.dart';
 import 'package:habit_flow/widgets/habit_day_tracker_grid.dart';
+import 'package:habit_flow/widgets/alarm_settings_widget.dart';
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -337,6 +341,135 @@ void main() {
     state.setThemeMode(ThemeMode.dark);
     expect(state.themeMode, ThemeMode.dark);
     expect(state.isDarkMode, true);
+
+    state.dispose();
+  });
+
+  testWidgets('Weekly Performance Report: renders metrics, 7-day chart, and insights in both dark and light modes', (tester) async {
+    late SystemState state;
+    await tester.runAsync(() async {
+      state = SystemState();
+      await Future.delayed(const Duration(milliseconds: 50));
+    });
+
+    // Complete some tasks to populate data
+    final today = DateTime.now();
+    state.incrementQuestProgress('daily_pushups', 100, date: today);
+
+    // Test Dark Theme
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: SystemTheme.darkTheme,
+        home: WeeklyReportScreen(state: state),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('WEEKLY FIELD REPORT', skipOffstage: false), findsOneWidget);
+    expect(find.text('MISSION COMPLETION', skipOffstage: false), findsOneWidget);
+    expect(find.text('COMPLETED VS MISSED', skipOffstage: false), findsOneWidget);
+    expect(find.text('7-DAY ACTIVITY', skipOffstage: false), findsOneWidget);
+    expect(find.text('POWER GAINS', skipOffstage: false), findsOneWidget);
+    expect(find.text('HABIT ANALYSIS', skipOffstage: false), findsOneWidget);
+    expect(find.text('PREVIOUS WEEK COMPARISON', skipOffstage: false), findsOneWidget);
+    expect(find.text('SYSTEM INSIGHT', skipOffstage: false), findsOneWidget);
+
+    // Test Light Theme
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: SystemTheme.lightTheme,
+        home: WeeklyReportScreen(state: state),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('WEEKLY FIELD REPORT', skipOffstage: false), findsOneWidget);
+    expect(find.text('MISSION COMPLETION', skipOffstage: false), findsOneWidget);
+    expect(find.text('POWER GAINS', skipOffstage: false), findsOneWidget);
+
+    state.dispose();
+  });
+
+  testWidgets('Radiant Light Mode: ProgressScreen renders with high contrast and without error', (tester) async {
+    late SystemState state;
+    await tester.runAsync(() async {
+      state = SystemState();
+      await Future.delayed(const Duration(milliseconds: 50));
+    });
+
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: SystemTheme.lightTheme,
+        home: Scaffold(
+          body: ProgressScreen(state: state),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('PROGRESS REPORT', skipOffstage: false), findsOneWidget);
+    expect(find.text('WEEKLY FIELD REPORT', skipOffstage: false), findsOneWidget);
+    expect(find.text('LEVEL & EXPERIENCE', skipOffstage: false), findsOneWidget);
+    expect(find.text('STREAK RECORD', skipOffstage: false), findsOneWidget);
+    expect(find.text('CHARACTER DEVELOPMENT', skipOffstage: false), findsOneWidget);
+    expect(find.text('ACHIEVEMENTS', skipOffstage: false), findsOneWidget);
+    expect(find.text('WEEKLY PERFORMANCE', skipOffstage: false), findsOneWidget);
+
+    state.dispose();
+  });
+
+  test('Daily Quest Alarm: SystemState manages reminder time and persistence', () async {
+    final state = SystemState();
+    await Future.delayed(const Duration(milliseconds: 50));
+
+    expect(state.isReminderEnabled, false);
+    expect(state.reminderTime, const TimeOfDay(hour: 8, minute: 0));
+
+    state.setReminderTime(const TimeOfDay(hour: 7, minute: 30));
+    expect(state.reminderTime, const TimeOfDay(hour: 7, minute: 30));
+
+    state.dispose();
+  });
+
+  testWidgets('AlarmSettingsWidget: renders alarm card, shows time, and responds to theme', (tester) async {
+    late SystemState state;
+    await tester.runAsync(() async {
+      state = SystemState();
+      await Future.delayed(const Duration(milliseconds: 50));
+    });
+
+    // Dark Mode
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: SystemTheme.darkTheme,
+        home: Scaffold(
+          body: AlarmSettingsWidget(state: state),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('DAILY QUEST ALARM'), findsOneWidget);
+    expect(find.text('No alarm scheduled'), findsOneWidget);
+    expect(find.byType(Switch), findsOneWidget);
+
+    // Light Mode
+    await tester.pumpWidget(
+      MaterialApp(
+        theme: SystemTheme.lightTheme,
+        home: Scaffold(
+          body: AlarmSettingsWidget(state: state),
+        ),
+      ),
+    );
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 100));
+
+    expect(find.text('DAILY QUEST ALARM'), findsOneWidget);
 
     state.dispose();
   });

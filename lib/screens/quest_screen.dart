@@ -18,6 +18,202 @@ class QuestScreen extends StatefulWidget {
 class _QuestScreenState extends State<QuestScreen> {
   bool _showCompletedTasks = false;
 
+  void _showPresetsLibraryModal(BuildContext context) {
+    final isDark = SystemTheme.isDark(context);
+    final accent = SystemTheme.getPrimaryAccent(context);
+    final textPrimary = SystemTheme.getTextPrimary(context);
+    final textSecondary = SystemTheme.getTextSecondary(context);
+    final presets = Quest.presetTemplates();
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: SystemTheme.getPanelBg(context),
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+      ),
+      builder: (ctx) => DraggableScrollableSheet(
+        initialChildSize: 0.75,
+        minChildSize: 0.4,
+        maxChildSize: 0.9,
+        expand: false,
+        builder: (_, scrollController) => Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 12.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  margin: const EdgeInsets.only(bottom: 12),
+                  decoration: BoxDecoration(
+                    color: Colors.grey.withValues(alpha: 0.4),
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      Icon(Icons.library_add_check, color: accent, size: 20),
+                      const SizedBox(width: 8),
+                      Text(
+                        'PRESET PROTOCOL LIBRARY',
+                        style: GoogleFonts.orbitron(
+                          color: accent,
+                          fontSize: 15,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ),
+                  IconButton(
+                    icon: Icon(Icons.close, color: textSecondary, size: 20),
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ],
+              ),
+              Text(
+                'Select combat training, mental focus, and recovery habits to add to your daily regimen:',
+                style: GoogleFonts.rajdhani(color: textSecondary, fontSize: 13),
+              ),
+              const SizedBox(height: 12),
+              Expanded(
+                child: ListView.separated(
+                  controller: scrollController,
+                  itemCount: presets.length,
+                  separatorBuilder: (context, index) => const SizedBox(height: 8),
+                  itemBuilder: (context, index) {
+                    final preset = presets[index];
+                    final isAlreadyAdded = widget.state.allTemplateQuests
+                        .any((q) => q.title.toLowerCase().trim() == preset.title.toLowerCase().trim());
+
+                    return Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: isDark ? const Color(0xFF0F172A).withValues(alpha: 0.7) : Colors.white,
+                        borderRadius: BorderRadius.circular(8),
+                        border: Border.all(
+                          color: isAlreadyAdded
+                              ? SystemTheme.getGreenAccent(context).withValues(alpha: 0.4)
+                              : (isDark ? Colors.white12 : SystemColors.lightPanelBorder),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: accent.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(6),
+                              border: Border.all(color: accent.withValues(alpha: 0.4)),
+                            ),
+                            child: Text(
+                              '+1 ${preset.statReward.code}',
+                              style: GoogleFonts.orbitron(
+                                color: accent,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 12),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  preset.title,
+                                  style: GoogleFonts.orbitron(
+                                    color: textPrimary,
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  '${preset.description} • Target: ${preset.target} ${preset.unit}',
+                                  style: GoogleFonts.rajdhani(
+                                    color: textSecondary,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          if (isAlreadyAdded)
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: SystemTheme.getGreenAccent(context).withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(4),
+                              ),
+                              child: Text(
+                                'ACTIVE',
+                                style: GoogleFonts.orbitron(
+                                  color: SystemTheme.getGreenAccent(context),
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            )
+                          else
+                            ElevatedButton(
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: accent,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              onPressed: () {
+                                widget.state.addPresetQuest(preset);
+                                Navigator.pop(ctx);
+                              },
+                              child: Text(
+                                'ADD',
+                                style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                        ],
+                      ),
+                    );
+                  },
+                ),
+              ),
+              const SizedBox(height: 8),
+              Row(
+                children: [
+                  Expanded(
+                    child: OutlinedButton.icon(
+                      style: OutlinedButton.styleFrom(
+                        side: BorderSide(color: accent.withValues(alpha: 0.6)),
+                        foregroundColor: accent,
+                      ),
+                      onPressed: () {
+                        widget.state.restoreDefaultQuests();
+                        Navigator.pop(ctx);
+                      },
+                      icon: const Icon(Icons.restore, size: 16),
+                      label: Text(
+                        'RESTORE ALL DEFAULTS',
+                        style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
   void _showAddQuestDialog(BuildContext context) {
     final titleCtrl = TextEditingController();
     final descCtrl = TextEditingController();
@@ -25,19 +221,25 @@ class _QuestScreenState extends State<QuestScreen> {
     final unitCtrl = TextEditingController(text: 'reps');
     StatType selectedStat = StatType.str;
 
+    final isDark = SystemTheme.isDark(context);
+    final accent = SystemTheme.getPrimaryAccent(context);
+    final textPrimary = SystemTheme.getTextPrimary(context);
+    final textSecondary = SystemTheme.getTextSecondary(context);
+    final presets = Quest.presetTemplates();
+
     showDialog(
       context: context,
       builder: (ctx) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
-          backgroundColor: SystemColors.panelBg,
+          backgroundColor: SystemTheme.getPanelBg(context),
           shape: RoundedRectangleBorder(
-            side: const BorderSide(color: SystemColors.cyanGlow, width: 1.5),
+            side: BorderSide(color: accent, width: 1.5),
             borderRadius: BorderRadius.circular(8),
           ),
           title: Text(
             'REGISTER REPEATING TASK',
             style: GoogleFonts.orbitron(
-              color: SystemColors.cyanGlow,
+              color: accent,
               fontSize: 15,
               fontWeight: FontWeight.bold,
             ),
@@ -45,10 +247,53 @@ class _QuestScreenState extends State<QuestScreen> {
           content: SingleChildScrollView(
             child: Column(
               mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
+                Text(
+                  'QUICK TEMPLATES (TAP TO AUTO-FILL):',
+                  style: GoogleFonts.orbitron(
+                    color: accent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: 0.8,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: presets.map((p) {
+                      return Padding(
+                        padding: const EdgeInsets.only(right: 6.0),
+                        child: ActionChip(
+                          backgroundColor: isDark ? const Color(0xFF1E293B) : const Color(0xFFF1F5F9),
+                          side: BorderSide(color: accent.withValues(alpha: 0.3)),
+                          label: Text(
+                            p.title,
+                            style: GoogleFonts.rajdhani(
+                              color: textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                          onPressed: () {
+                            setDialogState(() {
+                              titleCtrl.text = p.title;
+                              descCtrl.text = p.description;
+                              targetCtrl.text = p.target.toString();
+                              unitCtrl.text = p.unit;
+                              selectedStat = p.statReward;
+                            });
+                          },
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+                const SizedBox(height: 12),
                 TextField(
                   controller: titleCtrl,
-                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 16),
+                  style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 16),
                   decoration: const InputDecoration(
                     labelText: 'Task / Habit Title',
                     hintText: 'e.g. Read Philosophy, Deep Work, Push-ups',
@@ -57,7 +302,7 @@ class _QuestScreenState extends State<QuestScreen> {
                 const SizedBox(height: 10),
                 TextField(
                   controller: descCtrl,
-                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 16),
+                  style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 16),
                   decoration: const InputDecoration(
                     labelText: 'System Description',
                     hintText: 'e.g. Elevate mental sharpness and endurance',
@@ -70,7 +315,7 @@ class _QuestScreenState extends State<QuestScreen> {
                       child: TextField(
                         controller: targetCtrl,
                         keyboardType: TextInputType.number,
-                        style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 16),
+                        style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 16),
                         decoration: const InputDecoration(labelText: 'Target Goal'),
                       ),
                     ),
@@ -78,7 +323,7 @@ class _QuestScreenState extends State<QuestScreen> {
                     Expanded(
                       child: TextField(
                         controller: unitCtrl,
-                        style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 16),
+                        style: GoogleFonts.rajdhani(color: textPrimary, fontSize: 16),
                         decoration: const InputDecoration(labelText: 'Unit (reps, mins, km)'),
                       ),
                     ),
@@ -90,7 +335,7 @@ class _QuestScreenState extends State<QuestScreen> {
                   child: Text(
                     'SELECT ATTRIBUTE (INCREASES AUTOMATICALLY):',
                     style: GoogleFonts.orbitron(
-                      color: SystemColors.cyanGlow,
+                      color: accent,
                       fontSize: 10,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.8,
@@ -109,17 +354,19 @@ class _QuestScreenState extends State<QuestScreen> {
                       child: Container(
                         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                         decoration: BoxDecoration(
-                          color: isSel ? SystemColors.cyanGlow.withValues(alpha: 0.25) : Colors.black38,
+                          color: isSel
+                              ? accent.withValues(alpha: isDark ? 0.25 : 0.15)
+                              : (isDark ? Colors.black38 : const Color(0xFFF1F5F9)),
                           borderRadius: BorderRadius.circular(6),
                           border: Border.all(
-                            color: isSel ? SystemColors.cyanGlow : Colors.white24,
+                            color: isSel ? accent : (isDark ? Colors.white24 : SystemColors.lightPanelBorder),
                             width: isSel ? 1.5 : 1.0,
                           ),
                         ),
                         child: Text(
                           '+1 ${s.code} (${s.label})',
                           style: GoogleFonts.rajdhani(
-                            color: isSel ? SystemColors.cyanGlow : Colors.white70,
+                            color: isSel ? accent : textSecondary,
                             fontWeight: isSel ? FontWeight.bold : FontWeight.w600,
                             fontSize: 13,
                           ),
@@ -132,7 +379,7 @@ class _QuestScreenState extends State<QuestScreen> {
                 Text(
                   'Clearing this task automatically increases Hunter ${selectedStat.label} (${selectedStat.code}) by +1.',
                   style: GoogleFonts.rajdhani(
-                    color: SystemColors.hpGreen,
+                    color: SystemTheme.getGreenAccent(context),
                     fontSize: 12,
                     fontWeight: FontWeight.w600,
                   ),
@@ -145,13 +392,13 @@ class _QuestScreenState extends State<QuestScreen> {
               onPressed: () => Navigator.pop(ctx),
               child: Text(
                 'CANCEL',
-                style: GoogleFonts.orbitron(color: Colors.white60),
+                style: GoogleFonts.orbitron(color: textSecondary),
               ),
             ),
             ElevatedButton(
               style: ElevatedButton.styleFrom(
-                backgroundColor: SystemColors.cyanGlow,
-                foregroundColor: Colors.black,
+                backgroundColor: accent,
+                foregroundColor: Colors.white,
               ),
               onPressed: () {
                 final target = int.tryParse(targetCtrl.text) ?? 10;
@@ -182,18 +429,23 @@ class _QuestScreenState extends State<QuestScreen> {
   }
 
   void _showAttributeSelectionDialog(BuildContext context, Quest quest) {
+    final isDark = SystemTheme.isDark(context);
+    final accent = SystemTheme.getPrimaryAccent(context);
+    final textPrimary = SystemTheme.getTextPrimary(context);
+    final textSecondary = SystemTheme.getTextSecondary(context);
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
-        backgroundColor: SystemColors.panelBg,
+        backgroundColor: SystemTheme.getPanelBg(context),
         shape: RoundedRectangleBorder(
-          side: const BorderSide(color: SystemColors.cyanGlow, width: 1.5),
+          side: BorderSide(color: accent, width: 1.5),
           borderRadius: BorderRadius.circular(8),
         ),
         title: Text(
           'SELECT ATTRIBUTE TARGET',
           style: GoogleFonts.orbitron(
-            color: SystemColors.cyanGlow,
+            color: accent,
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
@@ -205,7 +457,7 @@ class _QuestScreenState extends State<QuestScreen> {
             Text(
               'Task: "${quest.title}"',
               style: GoogleFonts.orbitron(
-                color: Colors.white,
+                color: textPrimary,
                 fontSize: 13,
                 fontWeight: FontWeight.bold,
               ),
@@ -214,7 +466,7 @@ class _QuestScreenState extends State<QuestScreen> {
             Text(
               'Select which attribute increases automatically when this task is completed:',
               style: GoogleFonts.rajdhani(
-                color: SystemColors.textSecondary,
+                color: textSecondary,
                 fontSize: 13,
               ),
             ),
@@ -233,11 +485,11 @@ class _QuestScreenState extends State<QuestScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? SystemColors.cyanGlow.withValues(alpha: 0.22)
-                          : Colors.black38,
+                          ? accent.withValues(alpha: isDark ? 0.22 : 0.12)
+                          : (isDark ? Colors.black38 : const Color(0xFFF1F5F9)),
                       borderRadius: BorderRadius.circular(6),
                       border: Border.all(
-                        color: isSelected ? SystemColors.cyanGlow : Colors.white24,
+                        color: isSelected ? accent : (isDark ? Colors.white24 : SystemColors.lightPanelBorder),
                         width: isSelected ? 1.5 : 1.0,
                       ),
                     ),
@@ -245,14 +497,14 @@ class _QuestScreenState extends State<QuestScreen> {
                       children: [
                         Icon(
                           isSelected ? Icons.check_circle : Icons.circle_outlined,
-                          color: isSelected ? SystemColors.cyanGlow : Colors.white38,
+                          color: isSelected ? accent : (isDark ? Colors.white38 : SystemTheme.getTextMuted(context)),
                           size: 18,
                         ),
                         const SizedBox(width: 10),
                         Text(
                           stat.code,
                           style: GoogleFonts.orbitron(
-                            color: isSelected ? SystemColors.cyanGlow : Colors.white,
+                            color: isSelected ? accent : textPrimary,
                             fontSize: 13,
                             fontWeight: FontWeight.bold,
                           ),
@@ -261,7 +513,7 @@ class _QuestScreenState extends State<QuestScreen> {
                         Text(
                           '(${stat.label})',
                           style: GoogleFonts.rajdhani(
-                            color: SystemColors.textSecondary,
+                            color: textSecondary,
                             fontSize: 13,
                           ),
                         ),
@@ -269,7 +521,7 @@ class _QuestScreenState extends State<QuestScreen> {
                         Text(
                           '+1 ${stat.code}',
                           style: GoogleFonts.orbitron(
-                            color: isSelected ? SystemColors.cyanGlow : Colors.white54,
+                            color: isSelected ? accent : textSecondary,
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                           ),
@@ -287,7 +539,7 @@ class _QuestScreenState extends State<QuestScreen> {
             onPressed: () => Navigator.pop(ctx),
             child: Text(
               'CLOSE',
-              style: GoogleFonts.orbitron(color: Colors.white60),
+              style: GoogleFonts.orbitron(color: textSecondary),
             ),
           ),
         ],
@@ -323,12 +575,12 @@ class _QuestScreenState extends State<QuestScreen> {
             children: [
               Row(
                 children: [
-                  const Icon(Icons.check_box_outlined, color: SystemColors.cyanGlow, size: 18),
+                  Icon(Icons.check_box_outlined, color: SystemTheme.getPrimaryAccent(context), size: 18),
                   const SizedBox(width: 8),
                   Text(
                     'TASKS • ${activeQuests.length} PENDING',
                     style: GoogleFonts.orbitron(
-                      color: SystemColors.cyanGlow,
+                      color: SystemTheme.getPrimaryAccent(context),
                       fontSize: 13,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 1.2,
@@ -336,30 +588,167 @@ class _QuestScreenState extends State<QuestScreen> {
                   ),
                 ],
               ),
-              TextButton.icon(
-                onPressed: () => _showAddQuestDialog(context),
-                icon: const Icon(Icons.add_circle_outline, color: SystemColors.cyanGlow, size: 16),
-                label: Text(
-                  'NEW TASK',
-                  style: GoogleFonts.orbitron(
-                    color: SystemColors.cyanGlow,
-                    fontSize: 11,
-                    fontWeight: FontWeight.bold,
+              Row(
+                children: [
+                  IconButton(
+                    tooltip: 'Preset Protocols',
+                    icon: Icon(Icons.library_books_outlined, color: SystemTheme.getPrimaryAccent(context), size: 18),
+                    onPressed: () => _showPresetsLibraryModal(context),
                   ),
-                ),
+                  PopupMenuButton<String>(
+                    tooltip: 'Default Protocols Menu',
+                    icon: Icon(Icons.more_vert, color: SystemTheme.getTextSecondary(context), size: 18),
+                    color: SystemTheme.getPanelBg(context),
+                    onSelected: (val) {
+                      if (val == 'restore') {
+                        widget.state.restoreDefaultQuests();
+                      } else if (val == 'reset_all') {
+                        widget.state.resetToAllDefaults();
+                      } else if (val == 'presets') {
+                        _showPresetsLibraryModal(context);
+                      }
+                    },
+                    itemBuilder: (ctx) => [
+                      PopupMenuItem(
+                        value: 'restore',
+                        child: Row(
+                          children: [
+                            Icon(Icons.restore, color: SystemTheme.getPrimaryAccent(context), size: 16),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Restore Default Quests',
+                              style: GoogleFonts.rajdhani(
+                                color: SystemTheme.getTextPrimary(context),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'presets',
+                        child: Row(
+                          children: [
+                            Icon(Icons.auto_awesome, color: SystemTheme.getPrimaryAccent(context), size: 16),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Browse Preset Library',
+                              style: GoogleFonts.rajdhani(
+                                color: SystemTheme.getTextPrimary(context),
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      PopupMenuItem(
+                        value: 'reset_all',
+                        child: Row(
+                          children: [
+                            const Icon(Icons.restart_alt, color: Colors.orangeAccent, size: 16),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Reset All to Defaults',
+                              style: GoogleFonts.rajdhani(
+                                color: Colors.orangeAccent,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  TextButton.icon(
+                    onPressed: () => _showAddQuestDialog(context),
+                    icon: Icon(Icons.add_circle_outline, color: SystemTheme.getPrimaryAccent(context), size: 16),
+                    label: Text(
+                      'NEW TASK',
+                      style: GoogleFonts.orbitron(
+                        color: SystemTheme.getPrimaryAccent(context),
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ],
           ),
 
           // Active Linear Tasks
           if (activeQuests.isEmpty && completedQuests.isEmpty)
-            Padding(
-              padding: const EdgeInsets.symmetric(vertical: 24.0),
-              child: Center(
-                child: Text(
-                  'No tasks registered. Tap "NEW TASK" to add daily repeating habits.',
-                  style: GoogleFonts.rajdhani(color: SystemColors.textMuted, fontSize: 14),
+            Container(
+              margin: const EdgeInsets.symmetric(vertical: 20.0),
+              padding: const EdgeInsets.all(20.0),
+              decoration: BoxDecoration(
+                color: SystemTheme.isDark(context)
+                    ? const Color(0xFF0F172A).withValues(alpha: 0.6)
+                    : Colors.white,
+                borderRadius: BorderRadius.circular(10),
+                border: Border.all(
+                  color: SystemTheme.isDark(context) ? Colors.white12 : SystemColors.lightPanelBorder,
                 ),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.assignment_outlined,
+                    size: 40,
+                    color: SystemTheme.getTextSecondary(context).withValues(alpha: 0.6),
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    'NO PROTOCOLS REGISTERED',
+                    style: GoogleFonts.orbitron(
+                      color: SystemTheme.getTextPrimary(context),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 1.0,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Initialize your daily habit flow with default hunter protocols or register custom goals.',
+                    textAlign: TextAlign.center,
+                    style: GoogleFonts.rajdhani(
+                      color: SystemTheme.getTextSecondary(context),
+                      fontSize: 13,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: 8,
+                    runSpacing: 8,
+                    alignment: WrapAlignment.center,
+                    children: [
+                      ElevatedButton.icon(
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: SystemTheme.getPrimaryAccent(context),
+                          foregroundColor: Colors.white,
+                        ),
+                        onPressed: () => widget.state.restoreDefaultQuests(),
+                        icon: const Icon(Icons.restore, size: 16),
+                        label: Text(
+                          'RESTORE DEFAULT TASKS',
+                          style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                      OutlinedButton.icon(
+                        style: OutlinedButton.styleFrom(
+                          side: BorderSide(color: SystemTheme.getPrimaryAccent(context)),
+                          foregroundColor: SystemTheme.getPrimaryAccent(context),
+                        ),
+                        onPressed: () => _showPresetsLibraryModal(context),
+                        icon: const Icon(Icons.auto_awesome, size: 16),
+                        label: Text(
+                          'PRESET LIBRARY',
+                          style: GoogleFonts.orbitron(fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
               ),
             )
           else if (activeQuests.isEmpty && completedQuests.isNotEmpty)
@@ -433,23 +822,23 @@ class _QuestScreenState extends State<QuestScreen> {
                           _showCompletedTasks
                               ? Icons.keyboard_arrow_down
                               : Icons.keyboard_arrow_right,
-                          color: SystemColors.textSecondary,
+                          color: SystemTheme.getTextSecondary(context),
                           size: 20,
                         ),
                         const SizedBox(width: 6),
                         Text(
                           'Completed (${completedQuests.length})',
                           style: GoogleFonts.orbitron(
-                            color: SystemColors.textSecondary,
+                            color: SystemTheme.getTextSecondary(context),
                             fontSize: 12,
                             fontWeight: FontWeight.w600,
                             letterSpacing: 1.0,
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Expanded(
+                        Expanded(
                           child: Divider(
-                            color: Colors.white12,
+                            color: SystemTheme.getPanelBorder(context),
                             thickness: 1,
                           ),
                         ),

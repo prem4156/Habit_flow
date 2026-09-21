@@ -6,12 +6,14 @@ import 'screens/quest_screen.dart';
 import 'screens/status_screen.dart';
 import 'services/system_state.dart';
 import 'services/auth_service.dart';
+import 'services/notification_service.dart';
 import 'theme/system_theme.dart';
 import 'widgets/emergency_quest_dialog.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AuthService.instance.initialize();
+  await NotificationService.instance.initialize();
   runApp(const SoloLevelingHabitApp());
 }
 
@@ -330,12 +332,12 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
             margin: const EdgeInsets.only(right: 8),
             padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
             decoration: BoxDecoration(
-              color: isDark ? Colors.black45 : Colors.black.withValues(alpha: 0.05),
+              color: isDark ? Colors.black45 : const Color(0xFFF1F5F9),
               borderRadius: BorderRadius.circular(4),
               border: Border.all(
                 color: isDark
                     ? SystemColors.cyanGlow.withValues(alpha: 0.4)
-                    : SystemColors.lightPanelBorder,
+                    : const Color(0xFFCBD5E1),
               ),
             ),
             child: Row(
@@ -353,7 +355,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                 Text(
                   '[${profile.rank.label.split('-')[0]}]',
                   style: GoogleFonts.orbitron(
-                    color: SystemColors.goldAccent,
+                    color: SystemTheme.getGoldAccent(context),
                     fontSize: 10,
                     fontWeight: FontWeight.bold,
                   ),
@@ -366,9 +368,12 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
         // Hunter Account Dropdown Menu
         if (_systemState.currentUser != null)
           PopupMenuButton<String>(
-            color: SystemColors.panelBg,
+            color: SystemTheme.getPanelBg(context),
             shape: RoundedRectangleBorder(
-              side: const BorderSide(color: SystemColors.cyanGlow, width: 1.2),
+              side: BorderSide(
+                color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow,
+                width: 1.2,
+              ),
               borderRadius: BorderRadius.circular(8),
             ),
             icon: Container(
@@ -379,8 +384,8 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                   color: _systemState.currentUser!.isGoogle
                       ? Colors.blueAccent
                       : _systemState.currentUser!.isGuest
-                          ? SystemColors.hpGreen
-                          : SystemColors.monarchViolet,
+                          ? SystemTheme.getGreenAccent(context)
+                          : SystemTheme.getPurpleAccent(context),
                   width: 1.5,
                 ),
               ),
@@ -390,7 +395,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                       ? _systemState.currentUser!.displayName[0].toUpperCase()
                       : 'H',
                   style: GoogleFonts.orbitron(
-                    color: Colors.white,
+                    color: SystemTheme.getTextPrimary(context),
                     fontSize: 11,
                     fontWeight: FontWeight.bold,
                   ),
@@ -421,7 +426,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                             child: Text(
                               user.displayName,
                               style: GoogleFonts.orbitron(
-                                color: Colors.white,
+                                color: SystemTheme.getTextPrimary(context),
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -433,7 +438,7 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                       Text(
                         user.email,
                         style: GoogleFonts.rajdhani(
-                          color: SystemColors.textSecondary,
+                          color: SystemTheme.getTextSecondary(context),
                           fontSize: 11,
                         ),
                         overflow: TextOverflow.ellipsis,
@@ -442,12 +447,12 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                       Text(
                         'Provider: ${user.provider.label}',
                         style: GoogleFonts.rajdhani(
-                          color: SystemColors.cyanGlow,
+                          color: isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow,
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      const Divider(color: Colors.white24),
+                      Divider(color: SystemTheme.getPanelBorder(context)),
                     ],
                   ),
                 ),
@@ -456,7 +461,11 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                     enabled: false,
                     child: Text(
                       'SWITCH IDENTITIES:',
-                      style: GoogleFonts.orbitron(color: SystemColors.textMuted, fontSize: 9, fontWeight: FontWeight.bold),
+                      style: GoogleFonts.orbitron(
+                        color: SystemTheme.getTextMuted(context),
+                        fontSize: 9,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
                   ),
                   ..._systemState.accounts.where((a) => a.id != user.id).map(
@@ -469,7 +478,11 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                               Expanded(
                                 child: Text(
                                   acc.displayName,
-                                  style: GoogleFonts.rajdhani(color: Colors.white, fontSize: 13, fontWeight: FontWeight.w600),
+                                  style: GoogleFonts.rajdhani(
+                                    color: SystemTheme.getTextPrimary(context),
+                                    fontSize: 13,
+                                    fontWeight: FontWeight.w600,
+                                  ),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                               ),
@@ -477,22 +490,22 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
                           ),
                         ),
                       ),
-                  const PopupMenuItem<String>(
+                  PopupMenuItem<String>(
                     enabled: false,
                     height: 8,
-                    child: Divider(color: Colors.white12),
+                    child: Divider(color: SystemTheme.getPanelBorder(context)),
                   ),
                 ],
                 PopupMenuItem<String>(
                   value: 'sign_out',
                   child: Row(
                     children: [
-                      const Icon(Icons.logout, color: SystemColors.crimsonGlow, size: 16),
+                      Icon(Icons.logout, color: SystemTheme.getCrimsonAccent(context), size: 16),
                       const SizedBox(width: 8),
                       Text(
                         'DISCONNECT / SIGN OUT',
                         style: GoogleFonts.orbitron(
-                          color: SystemColors.crimsonGlow,
+                          color: SystemTheme.getCrimsonAccent(context),
                           fontSize: 11,
                           fontWeight: FontWeight.bold,
                         ),
@@ -512,8 +525,8 @@ class _MainSystemScreenState extends State<MainSystemScreen> {
           decoration: BoxDecoration(
             gradient: LinearGradient(
               colors: [
-                SystemColors.cyanGlow.withValues(alpha: 0.8),
-                SystemColors.blueGlow.withValues(alpha: 0.3),
+                (isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow).withValues(alpha: 0.8),
+                (isDark ? SystemColors.blueGlow : const Color(0xFF0284C7)).withValues(alpha: 0.3),
                 Colors.transparent,
               ],
             ),

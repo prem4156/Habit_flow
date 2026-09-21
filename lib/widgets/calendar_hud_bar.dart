@@ -233,21 +233,21 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                     padding: const EdgeInsets.symmetric(vertical: 6.0),
                     decoration: BoxDecoration(
                       color: isSelected
-                          ? accentColor.withValues(alpha: isDark ? 0.22 : 0.15)
+                          ? (isDark ? accentColor.withValues(alpha: 0.22) : accentColor)
                           : (isDark ? Colors.black.withValues(alpha: 0.4) : const Color(0xFFF8FAFC)),
                       borderRadius: BorderRadius.circular(8.0),
                       border: Border.all(
                         color: isSelected
                             ? accentColor
                             : (isDateToday
-                                ? accentColor.withValues(alpha: 0.6)
-                                : (isDark ? Colors.white12 : Colors.black12)),
+                                ? accentColor.withValues(alpha: 0.7)
+                                : (isDark ? Colors.white12 : SystemColors.lightPanelBorder)),
                         width: isSelected ? 1.8 : 1.0,
                       ),
                       boxShadow: isSelected
                           ? [
                               BoxShadow(
-                                color: accentColor.withValues(alpha: isDark ? 0.35 : 0.2),
+                                color: accentColor.withValues(alpha: isDark ? 0.35 : 0.25),
                                 blurRadius: 10,
                               ),
                             ]
@@ -261,8 +261,8 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                           _getWeekdayName(date.weekday),
                           style: GoogleFonts.rajdhani(
                             color: isSelected
-                                ? accentColor
-                                : (isDateToday ? (isDark ? Colors.white : accentColor) : (isDark ? Colors.white54 : const Color(0xFF64748B))),
+                                ? Colors.white
+                                : (isDateToday ? accentColor : (isDark ? Colors.white54 : SystemColors.lightTextSecondary)),
                             fontSize: 11,
                             fontWeight: FontWeight.bold,
                             letterSpacing: 0.5,
@@ -274,8 +274,8 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                           '${date.day}',
                           style: GoogleFonts.orbitron(
                             color: isSelected
-                                ? (isDark ? Colors.white : accentColor)
-                                : (isDateToday ? accentColor : (isDark ? Colors.white70 : const Color(0xFF0F172A))),
+                                ? Colors.white
+                                : (isDateToday ? accentColor : (isDark ? Colors.white70 : SystemColors.lightTextPrimary)),
                             fontSize: 16,
                             fontWeight: isSelected ? FontWeight.w900 : FontWeight.bold,
                           ),
@@ -289,15 +289,17 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                               Container(
                                 width: 6,
                                 height: 6,
-                                decoration: const BoxDecoration(
-                                  color: SystemColors.hpGreen,
+                                decoration: BoxDecoration(
+                                  color: isDark ? SystemColors.hpGreen : (isSelected ? Colors.white : SystemColors.lightHpGreen),
                                   shape: BoxShape.circle,
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: SystemColors.hpGreen,
-                                      blurRadius: 4,
-                                    ),
-                                  ],
+                                  boxShadow: isDark
+                                      ? [
+                                          const BoxShadow(
+                                            color: SystemColors.hpGreen,
+                                            blurRadius: 4,
+                                          ),
+                                        ]
+                                      : null,
                                 ),
                               )
                             else if (completedCount > 0)
@@ -305,7 +307,7 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                                 width: 6,
                                 height: 6,
                                 decoration: BoxDecoration(
-                                  color: SystemColors.cyanGlow.withValues(alpha: 0.8),
+                                  color: isSelected && !isDark ? Colors.white70 : accentColor.withValues(alpha: 0.8),
                                   shape: BoxShape.circle,
                                 ),
                               )
@@ -314,7 +316,9 @@ class _CalendarHudBarState extends State<CalendarHudBar> {
                                 width: 4,
                                 height: 4,
                                 decoration: BoxDecoration(
-                                  color: isSelected ? SystemColors.cyanGlow.withValues(alpha: 0.4) : Colors.white24,
+                                  color: isSelected
+                                      ? (isDark ? accentColor.withValues(alpha: 0.4) : Colors.white38)
+                                      : (isDark ? Colors.white24 : SystemColors.lightPanelBorder),
                                   shape: BoxShape.circle,
                                 ),
                               ),

@@ -30,34 +30,35 @@ class StatRow extends StatelessWidget {
     }
   }
 
-  Color _getColor() {
+  Color _getColor(bool isDark) {
     switch (statType) {
       case StatType.str:
-        return const Color(0xFFFF5252);
+        return isDark ? const Color(0xFFFF5252) : const Color(0xFFE11D48);
       case StatType.agi:
-        return const Color(0xFFFFD740);
+        return isDark ? const Color(0xFFFFD740) : const Color(0xFFD97706);
       case StatType.vit:
-        return const Color(0xFF69F0AE);
+        return isDark ? const Color(0xFF69F0AE) : const Color(0xFF059669);
       case StatType.intl:
-        return const Color(0xFF448AFF);
+        return isDark ? const Color(0xFF448AFF) : const Color(0xFF2563EB);
       case StatType.per:
-        return const Color(0xFFE040FB);
+        return isDark ? const Color(0xFFE040FB) : const Color(0xFF9333EA);
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final color = _getColor();
+    final isDark = SystemTheme.isDark(context);
+    final color = _getColor(isDark);
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 5.0),
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
         decoration: BoxDecoration(
-          color: SystemColors.panelBg.withValues(alpha: 0.6),
+          color: isDark ? SystemColors.panelBg.withValues(alpha: 0.6) : const Color(0xFFF8FAFC),
           borderRadius: BorderRadius.circular(6.0),
           border: Border.all(
-            color: color.withValues(alpha: 0.3),
+            color: color.withValues(alpha: isDark ? 0.3 : 0.4),
             width: 1.0,
           ),
         ),
@@ -78,7 +79,7 @@ class StatRow extends StatelessWidget {
             Text(
               '(${statType.label})',
               style: GoogleFonts.rajdhani(
-                color: SystemColors.textSecondary,
+                color: SystemTheme.getTextSecondary(context),
                 fontSize: 13,
                 fontWeight: FontWeight.w500,
               ),
@@ -105,7 +106,7 @@ class StatRow extends StatelessWidget {
             Text(
               '$value',
               style: GoogleFonts.orbitron(
-                color: SystemColors.textPrimary,
+                color: SystemTheme.getTextPrimary(context),
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),

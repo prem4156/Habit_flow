@@ -5,6 +5,7 @@ import '../models/hunter_model.dart';
 import '../services/system_state.dart';
 import '../theme/system_theme.dart';
 import '../widgets/system_window.dart';
+import 'weekly_report_screen.dart';
 
 class ProgressScreen extends StatelessWidget {
   final SystemState state;
@@ -13,6 +14,7 @@ class ProgressScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final profile = state.profile;
+    final primaryAccent = SystemTheme.getPrimaryAccent(context);
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
@@ -22,12 +24,12 @@ class ProgressScreen extends StatelessWidget {
           // Screen Title
           Row(
             children: [
-              const Icon(Icons.trending_up, color: SystemColors.cyanGlow, size: 22),
+              Icon(Icons.trending_up, color: primaryAccent, size: 22),
               const SizedBox(width: 10),
               Text(
                 'PROGRESS REPORT',
                 style: GoogleFonts.orbitron(
-                  color: SystemColors.cyanGlow,
+                  color: primaryAccent,
                   fontSize: 18,
                   fontWeight: FontWeight.w900,
                   letterSpacing: 2.0,
@@ -39,27 +41,31 @@ class ProgressScreen extends StatelessWidget {
           Text(
             'System Status • Real-Time Character Analysis',
             style: GoogleFonts.rajdhani(
-              color: SystemColors.textSecondary,
+              color: SystemTheme.getTextSecondary(context),
               fontSize: 13,
               fontWeight: FontWeight.w600,
             ),
           ),
           const SizedBox(height: 16),
 
+          // WEEKLY REPORT ENTRY POINT
+          _buildWeeklyReportButton(context),
+          const SizedBox(height: 8),
+
           // 1. LEVEL PROGRESS
-          _buildLevelSection(profile),
+          _buildLevelSection(context, profile),
 
           // 2. STREAK RECORD
-          _buildStreakSection(),
+          _buildStreakSection(context),
 
           // 3. CHARACTER DEVELOPMENT
-          _buildCharacterDevelopment(profile),
+          _buildCharacterDevelopment(context, profile),
 
           // 4. ACHIEVEMENTS
-          _buildAchievementsSection(),
+          _buildAchievementsSection(context),
 
           // 5. WEEKLY PERFORMANCE
-          _buildWeeklyPerformance(),
+          _buildWeeklyPerformance(context),
 
           const SizedBox(height: 24),
         ],
@@ -67,10 +73,74 @@ class ProgressScreen extends StatelessWidget {
     );
   }
 
+  Widget _buildWeeklyReportButton(BuildContext context) {
+    final isDark = SystemTheme.isDark(context);
+    final accent = SystemTheme.getPurpleAccent(context);
+    return GestureDetector(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => WeeklyReportScreen(state: state),
+          ),
+        );
+      },
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: accent.withValues(alpha: isDark ? 0.08 : 0.06),
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: accent.withValues(alpha: 0.5), width: 1.2),
+          boxShadow: [
+            BoxShadow(
+              color: accent.withValues(alpha: isDark ? 0.2 : 0.12),
+              blurRadius: 12,
+              spreadRadius: 1,
+            ),
+          ],
+        ),
+        child: Row(
+          children: [
+            Icon(Icons.assessment, color: accent, size: 22),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    'WEEKLY FIELD REPORT',
+                    style: GoogleFonts.orbitron(
+                      color: accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w900,
+                      letterSpacing: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    'View detailed weekly mission analysis',
+                    style: GoogleFonts.rajdhani(
+                      color: SystemTheme.getTextSecondary(context),
+                      fontSize: 12,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            Icon(Icons.chevron_right, color: accent, size: 22),
+          ],
+        ),
+      ),
+    );
+  }
+
   // ==============================
   // 1. LEVEL PROGRESS
   // ==============================
-  Widget _buildLevelSection(HunterProfile profile) {
+  Widget _buildLevelSection(BuildContext context, HunterProfile profile) {
+    final isDark = SystemTheme.isDark(context);
+    final primaryAccent = SystemTheme.getPrimaryAccent(context);
     final expPercent = profile.maxExp > 0
         ? (profile.exp / profile.maxExp).clamp(0.0, 1.0)
         : 0.0;
@@ -81,14 +151,14 @@ class ProgressScreen extends StatelessWidget {
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: SystemColors.cyanGlow.withValues(alpha: 0.12),
+          color: primaryAccent.withValues(alpha: 0.12),
           borderRadius: BorderRadius.circular(4),
-          border: Border.all(color: SystemColors.cyanGlow, width: 0.8),
+          border: Border.all(color: primaryAccent, width: 0.8),
         ),
         child: Text(
           profile.rank.label,
           style: GoogleFonts.orbitron(
-            color: SystemColors.cyanGlow,
+            color: primaryAccent,
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),
@@ -102,7 +172,7 @@ class ProgressScreen extends StatelessWidget {
               Text(
                 'LEVEL',
                 style: GoogleFonts.orbitron(
-                  color: SystemColors.textSecondary,
+                  color: SystemTheme.getTextSecondary(context),
                   fontSize: 14,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 2.0,
@@ -112,13 +182,13 @@ class ProgressScreen extends StatelessWidget {
               Text(
                 '${profile.level}',
                 style: GoogleFonts.orbitron(
-                  color: SystemColors.cyanGlow,
+                  color: primaryAccent,
                   fontSize: 42,
                   fontWeight: FontWeight.w900,
                   height: 1.0,
                   shadows: [
                     Shadow(
-                      color: SystemColors.cyanGlow.withValues(alpha: 0.5),
+                      color: primaryAccent.withValues(alpha: 0.5),
                       blurRadius: 15,
                     ),
                   ],
@@ -135,10 +205,13 @@ class ProgressScreen extends StatelessWidget {
                 Container(
                   height: 20,
                   decoration: BoxDecoration(
-                    color: Colors.black45,
+                    color: SystemTheme.getProgressTrack(context),
                     borderRadius: BorderRadius.circular(4),
                     border: Border.all(
-                        color: SystemColors.cyanGlow.withValues(alpha: 0.3)),
+                      color: isDark
+                          ? primaryAccent.withValues(alpha: 0.3)
+                          : const Color(0xFFE2E8F0),
+                    ),
                   ),
                 ),
                 FractionallySizedBox(
@@ -149,14 +222,13 @@ class ProgressScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(4),
                       gradient: LinearGradient(
                         colors: [
-                          SystemColors.cyanGlow.withValues(alpha: 0.8),
-                          SystemColors.blueGlow,
+                          primaryAccent.withValues(alpha: 0.85),
+                          isDark ? SystemColors.blueGlow : const Color(0xFF0284C7),
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color:
-                              SystemColors.cyanGlow.withValues(alpha: 0.4),
+                          color: primaryAccent.withValues(alpha: 0.4),
                           blurRadius: 8,
                         ),
                       ],
@@ -173,8 +245,7 @@ class ProgressScreen extends StatelessWidget {
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                         shadows: [
-                          const Shadow(
-                              color: Colors.black, blurRadius: 4),
+                          const Shadow(color: Colors.black54, blurRadius: 4),
                         ],
                       ),
                     ),
@@ -189,7 +260,7 @@ class ProgressScreen extends StatelessWidget {
             child: Text(
               '$percentText% to Level ${profile.level + 1}',
               style: GoogleFonts.rajdhani(
-                color: SystemColors.textSecondary,
+                color: SystemTheme.getTextSecondary(context),
                 fontSize: 12,
                 fontWeight: FontWeight.w600,
               ),
@@ -203,28 +274,30 @@ class ProgressScreen extends StatelessWidget {
   // ==============================
   // 2. STREAK RECORD
   // ==============================
-  Widget _buildStreakSection() {
+  Widget _buildStreakSection(BuildContext context) {
     return SystemWindow(
       title: 'Streak Record',
       child: Row(
         children: [
           Expanded(
             child: _buildStreakCard(
+              context,
               '🔥',
               'CURRENT STREAK',
               '${state.consecutivePerfectDays}',
               'DAYS',
-              SystemColors.cyanGlow,
+              SystemTheme.getPrimaryAccent(context),
             ),
           ),
           const SizedBox(width: 12),
           Expanded(
             child: _buildStreakCard(
+              context,
               '🏆',
               'BEST STREAK',
               '${state.bestStreak}',
               'DAYS',
-              SystemColors.goldAccent,
+              SystemTheme.getGoldAccent(context),
             ),
           ),
         ],
@@ -233,13 +306,14 @@ class ProgressScreen extends StatelessWidget {
   }
 
   Widget _buildStreakCard(
-      String emoji, String label, String value, String unit, Color color) {
+      BuildContext context, String emoji, String label, String value, String unit, Color color) {
+    final isDark = SystemTheme.isDark(context);
     return Container(
       padding: const EdgeInsets.all(14),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.06),
+        color: color.withValues(alpha: isDark ? 0.06 : 0.08),
         borderRadius: BorderRadius.circular(8),
-        border: Border.all(color: color.withValues(alpha: 0.3)),
+        border: Border.all(color: color.withValues(alpha: isDark ? 0.3 : 0.4)),
       ),
       child: Column(
         children: [
@@ -258,18 +332,20 @@ class ProgressScreen extends StatelessWidget {
           Text(
             value,
             style: GoogleFonts.orbitron(
-              color: Colors.white,
+              color: SystemTheme.getTextPrimary(context),
               fontSize: 32,
               fontWeight: FontWeight.w900,
-              shadows: [
-                Shadow(color: color.withValues(alpha: 0.5), blurRadius: 10),
-              ],
+              shadows: isDark
+                  ? [
+                      Shadow(color: color.withValues(alpha: 0.5), blurRadius: 10),
+                    ]
+                  : null,
             ),
           ),
           Text(
             unit,
             style: GoogleFonts.orbitron(
-              color: SystemColors.textSecondary,
+              color: SystemTheme.getTextSecondary(context),
               fontSize: 10,
               fontWeight: FontWeight.bold,
               letterSpacing: 2.0,
@@ -283,13 +359,13 @@ class ProgressScreen extends StatelessWidget {
   // ==============================
   // 3. CHARACTER DEVELOPMENT
   // ==============================
-  Widget _buildCharacterDevelopment(HunterProfile profile) {
+  Widget _buildCharacterDevelopment(BuildContext context, HunterProfile profile) {
     final stats = [
-      _StatEntry('STR', 'Strength', profile.stats.strength, SystemColors.crimsonGlow),
-      _StatEntry('AGI', 'Agility', profile.stats.agility, const Color(0xFF00E5FF)),
-      _StatEntry('VIT', 'Vitality', profile.stats.vitality, const Color(0xFF4CAF50)),
-      _StatEntry('INT', 'Intelligence', profile.stats.intelligence, SystemColors.purpleShadow),
-      _StatEntry('PER', 'Perception', profile.stats.perception, SystemColors.goldAccent),
+      _StatEntry('STR', 'Strength', profile.stats.strength, SystemTheme.getCrimsonAccent(context)),
+      _StatEntry('AGI', 'Agility', profile.stats.agility, SystemTheme.getPrimaryAccent(context)),
+      _StatEntry('VIT', 'Vitality', profile.stats.vitality, SystemTheme.getGreenAccent(context)),
+      _StatEntry('INT', 'Intelligence', profile.stats.intelligence, SystemTheme.getPurpleAccent(context)),
+      _StatEntry('PER', 'Perception', profile.stats.perception, SystemTheme.getGoldAccent(context)),
     ];
 
     return SystemWindow(
@@ -297,19 +373,20 @@ class ProgressScreen extends StatelessWidget {
       trailing: Text(
         'TOTAL: ${stats.fold<int>(0, (s, e) => s + e.value)}',
         style: GoogleFonts.orbitron(
-          color: SystemColors.textSecondary,
+          color: SystemTheme.getTextSecondary(context),
           fontSize: 10,
           fontWeight: FontWeight.bold,
         ),
       ),
       child: Column(
-        children: stats.map((s) => _buildStatBar(s)).toList(),
+        children: stats.map((s) => _buildStatBar(context, s)).toList(),
       ),
     );
   }
 
-  Widget _buildStatBar(_StatEntry stat) {
-    final maxVal = 100.0;
+  Widget _buildStatBar(BuildContext context, _StatEntry stat) {
+    final isDark = SystemTheme.isDark(context);
+    const maxVal = 100.0;
     final ratio = (stat.value / maxVal).clamp(0.0, 1.0);
 
     return Padding(
@@ -334,10 +411,13 @@ class ProgressScreen extends StatelessWidget {
                 Container(
                   height: 16,
                   decoration: BoxDecoration(
-                    color: Colors.black45,
+                    color: SystemTheme.getProgressTrack(context),
                     borderRadius: BorderRadius.circular(3),
                     border: Border.all(
-                        color: stat.color.withValues(alpha: 0.2)),
+                      color: isDark
+                          ? stat.color.withValues(alpha: 0.2)
+                          : const Color(0xFFE2E8F0),
+                    ),
                   ),
                 ),
                 FractionallySizedBox(
@@ -348,13 +428,13 @@ class ProgressScreen extends StatelessWidget {
                       borderRadius: BorderRadius.circular(3),
                       gradient: LinearGradient(
                         colors: [
-                          stat.color.withValues(alpha: 0.7),
+                          stat.color.withValues(alpha: 0.75),
                           stat.color,
                         ],
                       ),
                       boxShadow: [
                         BoxShadow(
-                          color: stat.color.withValues(alpha: 0.3),
+                          color: stat.color.withValues(alpha: isDark ? 0.3 : 0.15),
                           blurRadius: 6,
                         ),
                       ],
@@ -371,7 +451,7 @@ class ProgressScreen extends StatelessWidget {
               '${stat.value}',
               textAlign: TextAlign.right,
               style: GoogleFonts.orbitron(
-                color: Colors.white,
+                color: SystemTheme.getTextPrimary(context),
                 fontSize: 12,
                 fontWeight: FontWeight.bold,
               ),
@@ -385,24 +465,24 @@ class ProgressScreen extends StatelessWidget {
   // ==============================
   // 4. ACHIEVEMENTS
   // ==============================
-  Widget _buildAchievementsSection() {
+  Widget _buildAchievementsSection(BuildContext context) {
     final unlockedCount =
         state.achievements.where((a) => a.isUnlocked).length;
+    final purpleAccent = SystemTheme.getPurpleAccent(context);
 
     return SystemWindow(
       title: 'Achievements',
       trailing: Container(
         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
         decoration: BoxDecoration(
-          color: SystemColors.purpleShadow.withValues(alpha: 0.15),
+          color: purpleAccent.withValues(alpha: 0.15),
           borderRadius: BorderRadius.circular(4),
-          border:
-              Border.all(color: SystemColors.purpleShadow, width: 0.8),
+          border: Border.all(color: purpleAccent, width: 0.8),
         ),
         child: Text(
           '$unlockedCount/${state.achievements.length}',
           style: GoogleFonts.orbitron(
-            color: SystemColors.purpleShadow,
+            color: purpleAccent,
             fontWeight: FontWeight.bold,
             fontSize: 11,
           ),
@@ -410,23 +490,28 @@ class ProgressScreen extends StatelessWidget {
       ),
       child: Column(
         children: state.achievements
-            .map((a) => _buildAchievementRow(a))
+            .map((a) => _buildAchievementRow(context, a))
             .toList(),
       ),
     );
   }
 
-  Widget _buildAchievementRow(Achievement achievement) {
+  Widget _buildAchievementRow(BuildContext context, Achievement achievement) {
+    final isDark = SystemTheme.isDark(context);
     Color tierColor;
     switch (achievement.tier) {
       case AchievementTier.bronze:
-        tierColor = const Color(0xFFCD7F32);
+        tierColor = isDark ? const Color(0xFFCD7F32) : const Color(0xFFB45309);
+        break;
       case AchievementTier.silver:
-        tierColor = const Color(0xFFC0C0C0);
+        tierColor = isDark ? const Color(0xFFC0C0C0) : const Color(0xFF64748B);
+        break;
       case AchievementTier.gold:
-        tierColor = SystemColors.goldAccent;
+        tierColor = SystemTheme.getGoldAccent(context);
+        break;
       case AchievementTier.legendary:
-        tierColor = SystemColors.purpleShadow;
+        tierColor = SystemTheme.getPurpleAccent(context);
+        break;
     }
 
     return Padding(
@@ -435,13 +520,13 @@ class ProgressScreen extends StatelessWidget {
         padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
         decoration: BoxDecoration(
           color: achievement.isUnlocked
-              ? tierColor.withValues(alpha: 0.08)
-              : Colors.black38,
+              ? tierColor.withValues(alpha: isDark ? 0.08 : 0.12)
+              : (isDark ? Colors.black38 : const Color(0xFFF8FAFC)),
           borderRadius: BorderRadius.circular(6),
           border: Border.all(
             color: achievement.isUnlocked
-                ? tierColor.withValues(alpha: 0.5)
-                : Colors.white.withValues(alpha: 0.1),
+                ? tierColor.withValues(alpha: isDark ? 0.5 : 0.6)
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFE2E8F0)),
             width: achievement.isUnlocked ? 1.2 : 0.8,
           ),
         ),
@@ -453,11 +538,12 @@ class ProgressScreen extends StatelessWidget {
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
                 color: achievement.isUnlocked
-                    ? tierColor.withValues(alpha: 0.2)
-                    : Colors.black45,
+                    ? tierColor.withValues(alpha: isDark ? 0.2 : 0.15)
+                    : (isDark ? Colors.black45 : const Color(0xFFE2E8F0)),
                 border: Border.all(
-                  color:
-                      achievement.isUnlocked ? tierColor : Colors.white24,
+                  color: achievement.isUnlocked
+                      ? tierColor
+                      : (isDark ? Colors.white24 : const Color(0xFFCBD5E1)),
                   width: 1.5,
                 ),
               ),
@@ -466,7 +552,9 @@ class ProgressScreen extends StatelessWidget {
                   achievement.isUnlocked ? achievement.badge : '?',
                   style: TextStyle(
                     fontSize: achievement.isUnlocked ? 18 : 16,
-                    color: achievement.isUnlocked ? null : Colors.white24,
+                    color: achievement.isUnlocked
+                        ? null
+                        : (isDark ? Colors.white24 : const Color(0xFF94A3B8)),
                   ),
                 ),
               ),
@@ -481,7 +569,7 @@ class ProgressScreen extends StatelessWidget {
                     style: GoogleFonts.orbitron(
                       color: achievement.isUnlocked
                           ? tierColor
-                          : Colors.white38,
+                          : SystemTheme.getTextMuted(context),
                       fontSize: 11,
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.8,
@@ -492,8 +580,8 @@ class ProgressScreen extends StatelessWidget {
                     achievement.description,
                     style: GoogleFonts.rajdhani(
                       color: achievement.isUnlocked
-                          ? SystemColors.textSecondary
-                          : SystemColors.textMuted,
+                          ? SystemTheme.getTextSecondary(context)
+                          : SystemTheme.getTextMuted(context),
                       fontSize: 12,
                       fontWeight: FontWeight.w500,
                     ),
@@ -506,16 +594,16 @@ class ProgressScreen extends StatelessWidget {
                       child: LinearProgressIndicator(
                         value: achievement.progress,
                         minHeight: 4,
-                        backgroundColor: Colors.black45,
+                        backgroundColor: SystemTheme.getProgressTrack(context),
                         valueColor: AlwaysStoppedAnimation<Color>(
-                            tierColor.withValues(alpha: 0.6)),
+                            tierColor.withValues(alpha: isDark ? 0.6 : 0.8)),
                       ),
                     ),
                     const SizedBox(height: 2),
                     Text(
                       '${achievement.currentProgress} / ${achievement.maxProgress}',
                       style: GoogleFonts.orbitron(
-                        color: SystemColors.textMuted,
+                        color: SystemTheme.getTextMuted(context),
                         fontSize: 9,
                         fontWeight: FontWeight.bold,
                       ),
@@ -528,7 +616,9 @@ class ProgressScreen extends StatelessWidget {
               achievement.isUnlocked
                   ? Icons.check_circle
                   : Icons.lock_outline,
-              color: achievement.isUnlocked ? tierColor : Colors.white24,
+              color: achievement.isUnlocked
+                  ? tierColor
+                  : (isDark ? Colors.white24 : const Color(0xFF94A3B8)),
               size: 20,
             ),
           ],
@@ -540,7 +630,7 @@ class ProgressScreen extends StatelessWidget {
   // ==============================
   // 5. WEEKLY PERFORMANCE
   // ==============================
-  Widget _buildWeeklyPerformance() {
+  Widget _buildWeeklyPerformance(BuildContext context) {
     final now = DateTime.now();
     final today = DateTime(now.year, now.month, now.day);
     final dayNames = ['MON', 'TUE', 'WED', 'THU', 'FRI', 'SAT', 'SUN'];
@@ -561,27 +651,29 @@ class ProgressScreen extends StatelessWidget {
       trailing: Text(
         'LAST 7 DAYS',
         style: GoogleFonts.orbitron(
-          color: SystemColors.textSecondary,
+          color: SystemTheme.getTextSecondary(context),
           fontSize: 9,
           fontWeight: FontWeight.bold,
           letterSpacing: 1.0,
         ),
       ),
       child: Column(
-        children: days.map((d) => _buildDayRow(d)).toList(),
+        children: days.map((d) => _buildDayRow(context, d)).toList(),
       ),
     );
   }
 
-  Widget _buildDayRow(_DayPerf day) {
+  Widget _buildDayRow(BuildContext context, _DayPerf day) {
+    final isDark = SystemTheme.isDark(context);
+    final primaryAccent = SystemTheme.getPrimaryAccent(context);
     final pctText = '${(day.ratio * 100).toInt()}%';
     final barColor = day.ratio >= 1.0
-        ? SystemColors.cyanGlow
+        ? primaryAccent
         : day.ratio >= 0.5
-            ? SystemColors.blueGlow
+            ? (isDark ? SystemColors.blueGlow : const Color(0xFF0284C7))
             : day.ratio > 0
-                ? SystemColors.goldAccent
-                : Colors.white.withValues(alpha: 0.1);
+                ? SystemTheme.getGoldAccent(context)
+                : (isDark ? Colors.white.withValues(alpha: 0.1) : const Color(0xFFCBD5E1));
 
     return Padding(
       padding: const EdgeInsets.symmetric(vertical: 3.0),
@@ -593,8 +685,8 @@ class ProgressScreen extends StatelessWidget {
               day.label,
               style: GoogleFonts.orbitron(
                 color: day.isToday
-                    ? SystemColors.cyanGlow
-                    : SystemColors.textSecondary,
+                    ? primaryAccent
+                    : SystemTheme.getTextSecondary(context),
                 fontSize: 10,
                 fontWeight:
                     day.isToday ? FontWeight.w900 : FontWeight.bold,
@@ -608,10 +700,13 @@ class ProgressScreen extends StatelessWidget {
                 Container(
                   height: 14,
                   decoration: BoxDecoration(
-                    color: Colors.black38,
+                    color: SystemTheme.getProgressTrack(context),
                     borderRadius: BorderRadius.circular(3),
                     border: Border.all(
-                        color: Colors.white.withValues(alpha: 0.08)),
+                      color: isDark
+                          ? Colors.white.withValues(alpha: 0.08)
+                          : const Color(0xFFE2E8F0),
+                    ),
                   ),
                 ),
                 FractionallySizedBox(
@@ -624,8 +719,7 @@ class ProgressScreen extends StatelessWidget {
                       boxShadow: day.ratio > 0
                           ? [
                               BoxShadow(
-                                color:
-                                    barColor.withValues(alpha: 0.3),
+                                color: barColor.withValues(alpha: isDark ? 0.3 : 0.15),
                                 blurRadius: 4,
                               ),
                             ]
@@ -644,8 +738,8 @@ class ProgressScreen extends StatelessWidget {
               textAlign: TextAlign.right,
               style: GoogleFonts.orbitron(
                 color: day.ratio >= 1.0
-                    ? SystemColors.cyanGlow
-                    : SystemColors.textSecondary,
+                    ? primaryAccent
+                    : SystemTheme.getTextSecondary(context),
                 fontSize: 10,
                 fontWeight: FontWeight.bold,
               ),
@@ -653,8 +747,8 @@ class ProgressScreen extends StatelessWidget {
           ),
           if (day.ratio >= 1.0) ...[
             const SizedBox(width: 4),
-            const Icon(Icons.check_circle,
-                color: SystemColors.cyanGlow, size: 14),
+            Icon(Icons.check_circle,
+                color: primaryAccent, size: 14),
           ],
         ],
       ),

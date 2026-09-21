@@ -212,17 +212,19 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                               border: Border.all(
                                 color: _isPlayingDeadlyFx
                                     ? SystemColors.crimsonGlow
-                                    : SystemColors.cyanGlow,
+                                    : (SystemTheme.isDark(context) ? SystemColors.cyanGlow : SystemColors.lightCyanGlow),
                                 width: 2,
                               ),
                               color: _isPlayingDeadlyFx
                                   ? SystemColors.crimsonGlow.withValues(alpha: 0.25)
-                                  : Colors.black38,
+                                  : (SystemTheme.isDark(context) ? Colors.black38 : SystemColors.lightCyanGlow.withValues(alpha: 0.08)),
                               boxShadow: [
                                 BoxShadow(
                                   color: _isPlayingDeadlyFx
                                       ? SystemColors.crimsonGlow.withValues(alpha: 0.6)
-                                      : SystemColors.cyanGlow.withValues(alpha: 0.2),
+                                      : (SystemTheme.isDark(context)
+                                          ? SystemColors.cyanGlow.withValues(alpha: 0.2)
+                                          : SystemColors.lightCyanGlow.withValues(alpha: 0.15)),
                                   blurRadius: 8,
                                 ),
                               ],
@@ -232,7 +234,9 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                                 _isPlayingDeadlyFx ? Icons.offline_bolt : Icons.circle_outlined,
                                 color: _isPlayingDeadlyFx
                                     ? SystemColors.crimsonGlow
-                                    : SystemColors.cyanGlow.withValues(alpha: 0.6),
+                                    : (SystemTheme.isDark(context)
+                                        ? SystemColors.cyanGlow.withValues(alpha: 0.6)
+                                        : SystemColors.lightCyanGlow),
                                 size: 16,
                               ),
                             ),
@@ -300,7 +304,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                         // Delete option for custom quests
                         if (isCustom)
                           IconButton(
-                            icon: const Icon(Icons.delete_outline, size: 16, color: Colors.white38),
+                            icon: Icon(Icons.delete_outline, size: 16, color: SystemTheme.getTextMuted(context)),
                             onPressed: () => widget.state.deleteQuest(quest.id),
                             tooltip: 'Delete Habit',
                           ),
@@ -318,7 +322,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                             Text(
                               '[ ${quest.current} / ${quest.target} ${quest.unit} ]',
                               style: GoogleFonts.orbitron(
-                                color: SystemColors.cyanGlow,
+                                color: SystemTheme.getPrimaryAccent(context),
                                 fontSize: 12,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -327,7 +331,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                             Text(
                               '+${quest.expReward} EXP',
                               style: GoogleFonts.rajdhani(
-                                color: SystemColors.goldAccent,
+                                color: SystemTheme.getGoldAccent(context),
                                 fontSize: 11,
                                 fontWeight: FontWeight.bold,
                               ),
@@ -359,9 +363,11 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                       child: LinearProgressIndicator(
                         value: quest.progress,
                         minHeight: 6,
-                        backgroundColor: Colors.black45,
+                        backgroundColor: SystemTheme.getProgressTrack(context),
                         valueColor: AlwaysStoppedAnimation<Color>(
-                          _isPlayingDeadlyFx ? SystemColors.crimsonGlow : SystemColors.cyanGlow,
+                          _isPlayingDeadlyFx
+                              ? SystemColors.crimsonGlow
+                              : SystemTheme.getPrimaryAccent(context),
                         ),
                       ),
                     ),
@@ -481,14 +487,17 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
     DateTime date,
     Color statColor,
   ) {
+    final isDark = SystemTheme.isDark(context);
+    final green = SystemTheme.getGreenAccent(context);
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 4.0),
       padding: const EdgeInsets.symmetric(horizontal: 12.0, vertical: 10.0),
       decoration: BoxDecoration(
-        color: SystemTheme.isDark(context) ? Colors.black26 : const Color(0xFFF8FAFC),
+        color: isDark ? Colors.black26 : const Color(0xFFF8FAFC),
         borderRadius: BorderRadius.circular(6.0),
         border: Border.all(
-          color: SystemColors.hpGreen.withValues(alpha: SystemTheme.isDark(context) ? 0.3 : 0.5),
+          color: green.withValues(alpha: isDark ? 0.3 : 0.4),
           width: 0.8,
         ),
       ),
@@ -510,12 +519,12 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                 child: Container(
                   width: 24,
                   height: 24,
-                  decoration: const BoxDecoration(
+                  decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    color: SystemColors.hpGreen,
+                    color: green,
                   ),
-                  child: const Center(
-                    child: Icon(Icons.check, color: Colors.black, size: 16),
+                  child: Center(
+                    child: Icon(Icons.check, color: isDark ? Colors.black : Colors.white, size: 16),
                   ),
                 ),
               ),
@@ -529,11 +538,11 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                     Text(
                       quest.title,
                       style: GoogleFonts.orbitron(
-                        color: SystemTheme.isDark(context) ? Colors.white54 : const Color(0xFF64748B),
+                        color: isDark ? Colors.white54 : const Color(0xFF64748B),
                         fontSize: 13,
                         fontWeight: FontWeight.w600,
                         decoration: TextDecoration.lineThrough,
-                        decorationColor: SystemColors.hpGreen.withValues(alpha: 0.6),
+                        decorationColor: green.withValues(alpha: 0.6),
                       ),
                     ),
                     Text(
@@ -554,9 +563,9 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                   decoration: BoxDecoration(
-                    color: SystemColors.hpGreen.withValues(alpha: 0.15),
+                    color: green.withValues(alpha: 0.15),
                     borderRadius: BorderRadius.circular(4),
-                    border: Border.all(color: SystemColors.hpGreen.withValues(alpha: 0.4)),
+                    border: Border.all(color: green.withValues(alpha: 0.4)),
                   ),
                   child: Row(
                     mainAxisSize: MainAxisSize.min,
@@ -564,13 +573,13 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
                       Text(
                         '[ CLEARED • +1 ${quest.statReward.code} ]',
                         style: GoogleFonts.orbitron(
-                          color: SystemColors.hpGreen,
+                          color: green,
                           fontSize: 10,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       const SizedBox(width: 2),
-                      const Icon(Icons.arrow_drop_down, color: SystemColors.hpGreen, size: 12),
+                      Icon(Icons.arrow_drop_down, color: green, size: 12),
                     ],
                   ),
                 ),
@@ -596,43 +605,56 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
       return Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          _buildQuickAddBtn(quest, 10, '+10', date),
+          _buildQuickAddBtn(context, quest, 10, '+10', date),
           const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, 25, '+25', date),
+          _buildQuickAddBtn(context, quest, 25, '+25', date),
           const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, quest.target - quest.current, 'EXECUTE', date, isMax: true),
+          _buildQuickAddBtn(context, quest, quest.target - quest.current, 'EXECUTE', date, isMax: true),
         ],
       );
     } else if (quest.target >= 10) {
       return Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          _buildQuickAddBtn(quest, 1, '+1', date),
+          _buildQuickAddBtn(context, quest, 1, '+1', date),
           const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, 5, '+5', date),
+          _buildQuickAddBtn(context, quest, 5, '+5', date),
           const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, quest.target - quest.current, 'EXECUTE', date, isMax: true),
+          _buildQuickAddBtn(context, quest, quest.target - quest.current, 'EXECUTE', date, isMax: true),
         ],
       );
     } else {
       return Row(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          _buildQuickAddBtn(quest, 1, '+1', date),
+          _buildQuickAddBtn(context, quest, 1, '+1', date),
           const SizedBox(width: 8),
-          _buildQuickAddBtn(quest, quest.target - quest.current, 'EXECUTE', date, isMax: true),
+          _buildQuickAddBtn(context, quest, quest.target - quest.current, 'EXECUTE', date, isMax: true),
         ],
       );
     }
   }
 
   Widget _buildQuickAddBtn(
+    BuildContext context,
     Quest quest,
     int amount,
     String label,
     DateTime date, {
     bool isMax = false,
   }) {
+    final isDark = SystemTheme.isDark(context);
+    final accent = SystemTheme.getPrimaryAccent(context);
+    final btnBg = isMax
+        ? accent
+        : (isDark ? accent.withValues(alpha: 0.12) : accent.withValues(alpha: 0.08));
+    final btnBorder = isMax
+        ? accent
+        : accent.withValues(alpha: isDark ? 0.8 : 0.4);
+    final textColor = isMax
+        ? (isDark ? Colors.black : Colors.white)
+        : accent;
+
     return InkWell(
       onTap: () {
         if (isMax || (quest.current + amount >= quest.target)) {
@@ -650,16 +672,16 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
         decoration: BoxDecoration(
-          color: isMax ? SystemColors.cyanGlow : SystemColors.cyanGlow.withValues(alpha: 0.12),
+          color: btnBg,
           borderRadius: BorderRadius.circular(4),
           border: Border.all(
-            color: isMax ? SystemColors.cyanGlow : SystemColors.cyanGlow.withValues(alpha: 0.8),
+            color: btnBorder,
             width: 0.8,
           ),
           boxShadow: isMax
               ? [
                   BoxShadow(
-                    color: SystemColors.cyanGlow.withValues(alpha: 0.3),
+                    color: accent.withValues(alpha: isDark ? 0.3 : 0.2),
                     blurRadius: 6,
                   ),
                 ]
@@ -668,7 +690,7 @@ class _DeadlyQuestCardState extends State<DeadlyQuestCard>
         child: Text(
           label,
           style: GoogleFonts.orbitron(
-            color: isMax ? Colors.black : SystemColors.cyanGlow,
+            color: textColor,
             fontSize: 10,
             fontWeight: FontWeight.bold,
           ),

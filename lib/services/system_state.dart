@@ -2,6 +2,7 @@ import 'dart:async';
 import 'dart:convert';
 import 'dart:math';
 import 'package:flutter/material.dart';
+import 'notification_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../models/auth_user_model.dart';
 import '../models/hunter_model.dart';
@@ -27,6 +28,9 @@ class SystemState extends ChangeNotifier {
   static const String _prefBestStreakKey = 'sl_best_streak';
   static const String _prefTaskYearCompletionsKey = 'sl_task_year_completions';
   static const String _prefThemeModeKey = 'sl_theme_mode';
+  static const String _prefReminderEnabledKey = 'sl_reminder_enabled';
+  static const String _prefReminderHourKey = 'sl_reminder_hour';
+  static const String _prefReminderMinuteKey = 'sl_reminder_minute';
 
   // --- Real-time Auth State ---
   AuthUser? _currentUser;
@@ -73,6 +77,10 @@ class SystemState extends ChangeNotifier {
   ThemeMode _themeMode = ThemeMode.dark;
   Timer? _autonomousTimer;
   Timer? _initialDelayTimer;
+
+  // --- Daily Alarm Reminder State ---
+  bool _reminderEnabled = false;
+  TimeOfDay? _reminderTime;
 
   // Cryptic system monologues the system can emit
   static const List<String> _crypticObservations = [
@@ -155,6 +163,10 @@ class SystemState extends ChangeNotifier {
   Map<String, int> get statGainsFromQuests => _statGainsFromQuests;
   ThemeMode get themeMode => _themeMode;
   bool get isDarkMode => _themeMode == ThemeMode.dark;
+
+  // Reminder getters
+  bool get isReminderEnabled => _reminderEnabled;
+  TimeOfDay? get reminderTime => _reminderTime;
 
   void toggleTheme() {
     _themeMode = _themeMode == ThemeMode.dark ? ThemeMode.light : ThemeMode.dark;
@@ -265,6 +277,16 @@ class SystemState extends ChangeNotifier {
 
       // Load theme mode
       final savedTheme = prefs.getString(_prefThemeModeKey);
+      // Load reminder settings (global, not per-user)
+      _reminderEnabled = prefs.getBool(_prefReminderEnabledKey) ?? false;
+      final rHour = prefs.getInt(_prefReminderHourKey);
+      final rMin = prefs.getInt(_prefReminderMinuteKey);
+      if (rHour != null && rMin != null) {
+        _reminderTime = TimeOfDay(hour: rHour, minute: rMin);
+      } else {
+        _reminderTime = const TimeOfDay(hour: 8, minute: 0);
+      }
+
       if (savedTheme == 'light') {
         _themeMode = ThemeMode.light;
       } else {
@@ -302,6 +324,11 @@ class SystemState extends ChangeNotifier {
       _isInitialized = true;
       notifyListeners();
       _startAutonomousSystem();
+
+      // Re-schedule daily reminder if enabled
+      if (_reminderEnabled && _reminderTime != null) {
+        _scheduleReminderNotification();
+      }
     }
   }
 
@@ -320,7 +347,7 @@ class SystemState extends ChangeNotifier {
       final List list = jsonDecode(questsStr);
       _quests = list.map((q) => Quest.fromJson(q)).toList();
     } else {
-      _quests = [];
+      _quests = Quest.defaultSoloQuests();
     }
 
     final progressStr = prefs.getString(_userPref(_prefDailyProgressKey));
@@ -452,6 +479,13 @@ class SystemState extends ChangeNotifier {
       }
       await prefs.setInt(_userPref(_prefBestStreakKey), _bestStreak);
       await prefs.setString(_prefThemeModeKey, _themeMode == ThemeMode.light ? 'light' : 'dark');
+
+      // Save reminder settings
+      await prefs.setBool(_prefReminderEnabledKey, _reminderEnabled);
+      if (_reminderTime != null) {
+        await prefs.setInt(_prefReminderHourKey, _reminderTime!.hour);
+        await prefs.setInt(_prefReminderMinuteKey, _reminderTime!.minute);
+      }
     } catch (e) {
       debugPrint('Error saving system state: $e');
     }
@@ -685,6 +719,71 @@ class SystemState extends ChangeNotifier {
   void postSystemMessage(String msg) {
     _lastSystemMessage = msg;
     notifyListeners();
+  }
+
+  // =============================================
+  // --- DAILY ALARM REMINDER API ---
+  // =============================================
+
+  /// Set the daily reminder time and schedule the notification.
+  void setReminderTime(TimeOfDay time) {
+    _reminderTime = time;
+    if (_reminderEnabled) {
+      _scheduleReminderNotification();
+    }
+    postSystemMessage(
+      '⏰ [SYSTEM] Daily alarm set to '
+      '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}.',
+    );
+    saveState();
+    notifyListeners();
+  }
+
+  /// Enable or disable the daily reminder.
+  void toggleReminder(bool enabled) async {
+    _reminderEnabled = enabled;
+    if (enabled) {
+      // Request permission first
+      final granted = await NotificationService.instance.requestPermission();
+      if (!granted) {
+        _reminderEnabled = false;
+        postSystemMessage('❌ [SYSTEM] Notification permission denied. Cannot set alarm.');
+        saveState();
+        notifyListeners();
+        return;
+      }
+      _reminderTime ??= const TimeOfDay(hour: 8, minute: 0);
+      _scheduleReminderNotification();
+      final timeStr = '${_reminderTime!.hour.toString().padLeft(2, '0')}:${_reminderTime!.minute.toString().padLeft(2, '0')}';
+      postSystemMessage('⏰ [SYSTEM] Daily Quest Alarm ACTIVATED at $timeStr.');
+    } else {
+      NotificationService.instance.cancelDailyReminder();
+      postSystemMessage('🔕 [SYSTEM] Daily Quest Alarm DEACTIVATED.');
+    }
+    saveState();
+    notifyListeners();
+  }
+
+  /// Schedule the notification through NotificationService.
+  void _scheduleReminderNotification() {
+    if (_reminderTime == null) return;
+
+    // Build quest summary for the notification body
+    final questNames = _quests
+        .where((q) => q.isDaily && !q.isCompleted)
+        .map((q) => '• ${q.title}')
+        .take(5)
+        .join('\n');
+
+    final body = questNames.isNotEmpty
+        ? 'Your daily quests await, Hunter:\n$questNames'
+        : 'Your daily training awaits, Hunter. Open the app to begin.';
+
+    NotificationService.instance.scheduleDailyReminder(
+      time: _reminderTime!,
+      title: '⚔ [SYSTEM ALERT] Daily Quest Reminder',
+      body: body,
+    );
   }
 
   void clearSystemMessage() {
@@ -1289,6 +1388,45 @@ class SystemState extends ChangeNotifier {
     );
     _quests.add(newQuest);
     postSystemMessage('[SYSTEM] New Repeating Hunter Quest Registered: [${newQuest.title}]');
+    saveState();
+    notifyListeners();
+  }
+
+  void addPresetQuest(Quest template) {
+    // Generate unique ID
+    final newQuest = template.copyWith(
+      id: '${template.id}_${DateTime.now().millisecondsSinceEpoch}',
+      current: 0,
+      isCompleted: false,
+    );
+    _quests.add(newQuest);
+    postSystemMessage('[SYSTEM] Preset Task Registered: [${newQuest.title}] (+1 ${newQuest.statReward.code})');
+    saveState();
+    notifyListeners();
+  }
+
+  void restoreDefaultQuests() {
+    final defaults = Quest.defaultSoloQuests();
+    final existingTitles = _quests.map((q) => q.title.toLowerCase().trim()).toSet();
+    int added = 0;
+    for (final def in defaults) {
+      if (!existingTitles.contains(def.title.toLowerCase().trim())) {
+        _quests.add(def);
+        added++;
+      }
+    }
+    if (added == 0) {
+      postSystemMessage('[SYSTEM] All default training protocols are already active.');
+    } else {
+      postSystemMessage('[SYSTEM] Restored $added default Hunter Training Protocols.');
+    }
+    saveState();
+    notifyListeners();
+  }
+
+  void resetToAllDefaults() {
+    _quests = Quest.defaultSoloQuests();
+    postSystemMessage('[SYSTEM] All Protocols Reset to Default System Regimen.');
     saveState();
     notifyListeners();
   }

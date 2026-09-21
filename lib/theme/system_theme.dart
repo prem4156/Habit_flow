@@ -9,15 +9,21 @@ class SystemColors {
   static const Color panelBorder = Color(0xFF1E3A5F);
 
   // --- Light Mode Base Colors (Radiant System Theme) ---
-  static const Color lightBackground = Color(0xFFF1F5F9);
+  static const Color lightBackground = Color(0xFFF8FAFC);
   static const Color lightPanelBg = Color(0xFFFFFFFF);
   static const Color lightPanelBgTranslucent = Color(0xF2FFFFFF);
-  static const Color lightPanelBorder = Color(0xFFCBD5E1);
+  static const Color lightPanelBorder = Color(0xFFE2E8F0);
+  static const Color lightCardBg = Color(0xFFF1F5F9);
+  static const Color lightProgressTrack = Color(0xFFE2E8F0);
   static const Color lightTextPrimary = Color(0xFF0F172A);
   static const Color lightTextSecondary = Color(0xFF475569);
   static const Color lightTextMuted = Color(0xFF94A3B8);
   static const Color lightCyanGlow = Color(0xFF0284C7);
   static const Color lightBlueGlow = Color(0xFF0369A1);
+  static const Color lightGoldAccent = Color(0xFFD97706);
+  static const Color lightHpGreen = Color(0xFF16A34A);
+  static const Color lightCrimson = Color(0xFFDC2626);
+  static const Color lightMonarchPurple = Color(0xFF7C3AED);
   
   // --- Accent Glows ---
   static const Color cyanGlow = Color(0xFF00F0FF);
@@ -65,6 +71,12 @@ class SystemTheme {
   static Color getPanelBorder(BuildContext context) =>
       isDark(context) ? SystemColors.panelBorder : SystemColors.lightPanelBorder;
 
+  static Color getCardBg(BuildContext context) =>
+      isDark(context) ? Colors.black26 : SystemColors.lightCardBg;
+
+  static Color getProgressTrack(BuildContext context) =>
+      isDark(context) ? Colors.black45 : SystemColors.lightProgressTrack;
+
   static Color getTextPrimary(BuildContext context) =>
       isDark(context) ? SystemColors.textPrimary : SystemColors.lightTextPrimary;
 
@@ -76,6 +88,21 @@ class SystemTheme {
 
   static Color getPrimaryAccent(BuildContext context) =>
       isDark(context) ? SystemColors.cyanGlow : SystemColors.lightCyanGlow;
+
+  static Color getSecondaryAccent(BuildContext context) =>
+      isDark(context) ? SystemColors.blueGlow : SystemColors.lightBlueGlow;
+
+  static Color getGoldAccent(BuildContext context) =>
+      isDark(context) ? SystemColors.goldAccent : SystemColors.lightGoldAccent;
+
+  static Color getGreenAccent(BuildContext context) =>
+      isDark(context) ? SystemColors.hpGreen : SystemColors.lightHpGreen;
+
+  static Color getPurpleAccent(BuildContext context) =>
+      isDark(context) ? SystemColors.monarchPurple : SystemColors.lightMonarchPurple;
+
+  static Color getCrimsonAccent(BuildContext context) =>
+      isDark(context) ? SystemColors.crimsonGlow : SystemColors.lightCrimson;
 
   /// Signature Shadow Monarch Dark Theme
   static ThemeData get darkTheme {
@@ -131,19 +158,43 @@ class SystemTheme {
     return ThemeData.light().copyWith(
       scaffoldBackgroundColor: SystemColors.lightBackground,
       primaryColor: SystemColors.lightCyanGlow,
+      cardColor: SystemColors.lightPanelBg,
+      dividerColor: SystemColors.lightPanelBorder,
       colorScheme: const ColorScheme.light(
         primary: SystemColors.lightCyanGlow,
         secondary: SystemColors.lightBlueGlow,
         surface: SystemColors.lightPanelBg,
-        error: SystemColors.crimsonGlow,
+        error: SystemColors.lightCrimson,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: SystemColors.lightPanelBg,
         foregroundColor: SystemColors.lightTextPrimary,
         elevation: 0,
       ),
-      dialogTheme: const DialogThemeData(
+      dialogTheme: DialogThemeData(
         backgroundColor: SystemColors.lightPanelBg,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+          side: const BorderSide(color: SystemColors.lightCyanGlow, width: 1.2),
+        ),
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        filled: true,
+        fillColor: SystemColors.lightCardBg,
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: SystemColors.lightPanelBorder),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: SystemColors.lightPanelBorder),
+        ),
+        focusedBorder: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(6),
+          borderSide: const BorderSide(color: SystemColors.lightCyanGlow, width: 1.5),
+        ),
+        labelStyle: GoogleFonts.rajdhani(color: SystemColors.lightTextSecondary),
+        hintStyle: GoogleFonts.rajdhani(color: SystemColors.lightTextMuted),
       ),
       textTheme: GoogleFonts.rajdhaniTextTheme(ThemeData.light().textTheme).copyWith(
         displayLarge: GoogleFonts.orbitron(
@@ -181,23 +232,26 @@ class SystemTheme {
     double radius = 10.0,
     bool isDark = true,
   }) {
+    final effectiveBorder = !isDark && borderColor == SystemColors.cyanGlow
+        ? SystemColors.lightCyanGlow
+        : borderColor;
     return BoxDecoration(
       color: isDark ? SystemColors.panelBgTranslucent : SystemColors.lightPanelBgTranslucent,
       borderRadius: BorderRadius.circular(radius),
       border: Border.all(
-        color: borderColor.withValues(alpha: isDark ? 0.6 : 0.8),
+        color: effectiveBorder.withValues(alpha: isDark ? 0.6 : 0.8),
         width: 1.5,
       ),
       boxShadow: [
         BoxShadow(
-          color: borderColor.withValues(alpha: isDark ? glowOpacity : glowOpacity * 0.7),
+          color: effectiveBorder.withValues(alpha: isDark ? glowOpacity : glowOpacity * 0.4),
           blurRadius: 12,
           spreadRadius: 1,
         ),
         BoxShadow(
-          color: isDark ? Colors.black54 : Colors.black12,
+          color: isDark ? Colors.black54 : Colors.black.withValues(alpha: 0.05),
           blurRadius: 10,
-          spreadRadius: 2,
+          spreadRadius: isDark ? 2 : 1,
         ),
       ],
     );
@@ -205,7 +259,7 @@ class SystemTheme {
 
   static BoxDecoration deadlyPanel({bool isDark = true}) {
     return holographicPanel(
-      borderColor: SystemColors.crimsonGlow,
+      borderColor: isDark ? SystemColors.crimsonGlow : SystemColors.lightCrimson,
       glowOpacity: 0.35,
       isDark: isDark,
     );

@@ -24,37 +24,52 @@ class SystemWindow extends StatelessWidget {
     this.margin = const EdgeInsets.symmetric(vertical: 8.0),
   });
 
+  Color _resolveColor(Color c, bool isDark) {
+    if (isDark) return c;
+    if (c == SystemColors.cyanGlow) return SystemColors.lightCyanGlow;
+    if (c == SystemColors.monarchPurple || c == SystemColors.monarchViolet || c == SystemColors.purpleShadow) {
+      return SystemColors.lightMonarchPurple;
+    }
+    if (c == SystemColors.crimsonGlow || c == SystemColors.penaltyRed) {
+      return SystemColors.lightCrimson;
+    }
+    if (c == SystemColors.goldAccent) return SystemColors.lightGoldAccent;
+    if (c == SystemColors.hpGreen) return SystemColors.lightHpGreen;
+    return c;
+  }
+
   @override
   Widget build(BuildContext context) {
     final isDark = SystemTheme.isDark(context);
-    final effectiveBorderColor = borderColor == SystemColors.cyanGlow
-        ? (isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow)
-        : borderColor;
-    final effectiveTitleColor = titleColor == SystemColors.cyanGlow
-        ? (isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow)
-        : titleColor;
+    final effectiveBorderColor = _resolveColor(borderColor, isDark);
+    final effectiveTitleColor = _resolveColor(titleColor, isDark);
 
     return Container(
       margin: margin,
       decoration: BoxDecoration(
         color: isDark
             ? SystemColors.panelBg.withValues(alpha: 0.85)
-            : SystemColors.lightPanelBg.withValues(alpha: 0.95),
-        borderRadius: BorderRadius.circular(8.0),
+            : SystemColors.lightPanelBg,
+        borderRadius: BorderRadius.circular(10.0),
         border: Border.all(
-          color: effectiveBorderColor.withValues(alpha: isDark ? 0.5 : 0.6),
-          width: 1.5,
+          color: isDark
+              ? effectiveBorderColor.withValues(alpha: 0.5)
+              : effectiveBorderColor.withValues(alpha: 0.35),
+          width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: effectiveBorderColor.withValues(alpha: isDark ? 0.18 : 0.12),
+            color: isDark
+                ? effectiveBorderColor.withValues(alpha: 0.18)
+                : effectiveBorderColor.withValues(alpha: 0.08),
             blurRadius: 16,
             spreadRadius: 1,
           ),
           BoxShadow(
             color: isDark ? Colors.black87 : Colors.black.withValues(alpha: 0.04),
             blurRadius: 10,
-            spreadRadius: isDark ? 2 : 1,
+            offset: const Offset(0, 2),
+            spreadRadius: isDark ? 2 : 0,
           ),
         ],
       ),

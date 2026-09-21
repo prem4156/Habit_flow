@@ -196,6 +196,8 @@ class _HabitDayTrackerGridState extends State<HabitDayTrackerGrid> {
             weekColumns.add(const SizedBox(width: cellSpacing));
           }
 
+          final isDark = SystemTheme.isDark(context);
+
           // Header month label tracker
           monthHeaderLabels.add(
             SizedBox(
@@ -203,7 +205,7 @@ class _HabitDayTrackerGridState extends State<HabitDayTrackerGrid> {
               child: Text(
                 colMonthLabel ?? '',
                 style: GoogleFonts.orbitron(
-                  color: Colors.white38,
+                  color: isDark ? Colors.white38 : SystemColors.lightTextMuted,
                   fontSize: 8,
                   fontWeight: FontWeight.bold,
                 ),
@@ -214,6 +216,7 @@ class _HabitDayTrackerGridState extends State<HabitDayTrackerGrid> {
           );
         }
 
+        final isDark = SystemTheme.isDark(context);
         final completedDays = widget.state.getCompletedDaysForTask(widget.questId, year: targetYear);
         final completedCount = completedDays.length;
         final double percent = totalDays > 0 ? (completedCount / totalDays) * 100 : 0;
@@ -233,7 +236,7 @@ class _HabitDayTrackerGridState extends State<HabitDayTrackerGrid> {
                       child: Text(
                         '$targetYear ($totalDays DAYS)',
                         style: GoogleFonts.orbitron(
-                          color: SystemColors.textSecondary,
+                          color: isDark ? SystemColors.textSecondary : SystemColors.lightTextSecondary,
                           fontSize: 9,
                           letterSpacing: 0.6,
                           fontWeight: FontWeight.bold,
@@ -246,20 +249,20 @@ class _HabitDayTrackerGridState extends State<HabitDayTrackerGrid> {
                       padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 1.5),
                       decoration: BoxDecoration(
                         color: completedCount > 0
-                            ? themeColor.withValues(alpha: 0.15)
-                            : Colors.white.withValues(alpha: 0.05),
+                            ? themeColor.withValues(alpha: isDark ? 0.15 : 0.12)
+                            : (isDark ? Colors.white.withValues(alpha: 0.05) : SystemColors.lightCardBg),
                         borderRadius: BorderRadius.circular(3),
                         border: Border.all(
                           color: completedCount > 0
                               ? themeColor.withValues(alpha: 0.5)
-                              : Colors.white12,
+                              : (isDark ? Colors.white12 : SystemColors.lightPanelBorder),
                           width: 0.6,
                         ),
                       ),
                       child: Text(
                         '$completedCount/$totalDays (${percent.toStringAsFixed(0)}%)',
                         style: GoogleFonts.orbitron(
-                          color: completedCount > 0 ? themeColor : Colors.white60,
+                          color: completedCount > 0 ? themeColor : (isDark ? Colors.white60 : SystemColors.lightTextMuted),
                           fontSize: 8.5,
                           fontWeight: FontWeight.bold,
                         ),
@@ -275,9 +278,12 @@ class _HabitDayTrackerGridState extends State<HabitDayTrackerGrid> {
               width: double.infinity,
               padding: const EdgeInsets.symmetric(vertical: 4.0, horizontal: 2.0),
               decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.2),
+                color: isDark ? Colors.black.withValues(alpha: 0.2) : const Color(0xFFF8FAFC),
                 borderRadius: BorderRadius.circular(6),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.04), width: 0.8),
+                border: Border.all(
+                  color: isDark ? Colors.white.withValues(alpha: 0.04) : SystemColors.lightPanelBorder,
+                  width: 0.8,
+                ),
               ),
               child: SingleChildScrollView(
                 controller: _scrollController,
@@ -326,6 +332,8 @@ class _HabitDayTrackerGridState extends State<HabitDayTrackerGrid> {
         ? 'CLEARED'
         : (isToday ? 'DUE TODAY' : (isFuture ? 'UPCOMING' : 'MISSED'));
 
+    final isDark = SystemTheme.isDark(context);
+
     BoxDecoration decoration;
     if (isCompleted) {
       decoration = BoxDecoration(
@@ -333,43 +341,44 @@ class _HabitDayTrackerGridState extends State<HabitDayTrackerGrid> {
         borderRadius: BorderRadius.circular(2.2),
         boxShadow: [
           BoxShadow(
-            color: activeColor.withValues(alpha: 0.65),
-            blurRadius: 4.0,
+            color: activeColor.withValues(alpha: isDark ? 0.65 : 0.4),
+            blurRadius: isDark ? 4.0 : 3.0,
             spreadRadius: 0.4,
           ),
         ],
       );
     } else if (isToday) {
+      final todayBorder = isDark ? SystemColors.cyanGlow : SystemColors.lightCyanGlow;
       decoration = BoxDecoration(
-        color: const Color(0xFF1E2337),
+        color: isDark ? const Color(0xFF1E2337) : const Color(0xFFE0F2FE),
         borderRadius: BorderRadius.circular(2.2),
         border: Border.all(
-          color: SystemColors.cyanGlow,
+          color: todayBorder,
           width: 1.2,
         ),
         boxShadow: [
           BoxShadow(
-            color: SystemColors.cyanGlow.withValues(alpha: 0.4),
+            color: todayBorder.withValues(alpha: isDark ? 0.4 : 0.3),
             blurRadius: 3.0,
           ),
         ],
       );
     } else if (isFuture) {
       decoration = BoxDecoration(
-        color: const Color(0xFF10121A),
+        color: isDark ? const Color(0xFF10121A) : const Color(0xFFF1F5F9),
         borderRadius: BorderRadius.circular(2.2),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.04),
+          color: isDark ? Colors.white.withValues(alpha: 0.04) : SystemColors.lightPanelBorder.withValues(alpha: 0.6),
           width: 0.5,
         ),
       );
     } else {
       // Past missed day
       decoration = BoxDecoration(
-        color: const Color(0xFF161924),
+        color: isDark ? const Color(0xFF161924) : const Color(0xFFE2E8F0),
         borderRadius: BorderRadius.circular(2.2),
         border: Border.all(
-          color: Colors.white.withValues(alpha: 0.08),
+          color: isDark ? Colors.white.withValues(alpha: 0.08) : Colors.transparent,
           width: 0.6,
         ),
       );
